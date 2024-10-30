@@ -1,0 +1,2 @@
+ALTER TABLE T_DB_CHAT ADD COLUMN seen integer default 0;
+ALTER TABLE T_DB_CHAT ADD COLUMN msgSeenId text;
