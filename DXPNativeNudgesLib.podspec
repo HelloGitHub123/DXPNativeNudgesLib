@@ -16,7 +16,7 @@ Pod::Spec.new do |spec|
   #
 
   spec.name         = "DXPNativeNudgesLib"
-  spec.version      = "1.0.1"
+  spec.version      = "1.0.2"
   spec.summary      = "Nudges Native manager."
 
   # This description is used to generate tags and improve search results.
@@ -102,6 +102,9 @@ Pod::Spec.new do |spec|
   #  You can preserve files from being cleaned, please don't preserve
   #  non-essential files like tests, examples and documentation.
   #
+
+
+  spec.resource  = "DXPNativeNudgesLib/DB/NdCoreBizDBMigrationManager.bundle"
 
   # spec.resource  = "icon.png"
   # spec.resources = "Resources/*.png"
