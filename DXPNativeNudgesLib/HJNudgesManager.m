@@ -334,7 +334,7 @@ static HJNudgesManager *manager = nil;
 					//          if ([[pageName lowercaseString] containsString:@"viewcontroller"]) {
 					//            [self.nudgesShowList addObject:dic];
 					//          }
-					if ([pageName isEqualToString:self.currentPageName]) {
+					if (!isEmptyString_Nd(pageName) && [pageName isEqualToString:self.currentPageName]) {
 						[self.nudgesShowList addObject:dic];
 					}
 				}
@@ -358,7 +358,9 @@ static HJNudgesManager *manager = nil;
 					}
 				}
 				
-				[[HJNudgesManager sharedInstance] queryNudgesWithPageName:@"viewController"];
+				if (!isEmptyString_Nd(self.currentPageName)) {
+					[[HJNudgesManager sharedInstance] queryNudgesWithPageName:self.currentPageName];
+				}
 			}
 		}
 	}];
