@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// eg: 按钮点击事件
 /// @param jumpType 跳转类型
 /// @param url 跳转路由 or 路径
-- (void)AnnouncementClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url invokeAction:(NSString *)invokeAction buttonName:(NSString *)buttonName model:(NudgesBaseModel *)model;
+- (void)AnnouncementClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(NSString *)invokeAction buttonName:(NSString *)buttonName model:(NudgesBaseModel *)model;
 /// eg:提交评分
 - (void)AnnouncementSubmitByScore:(NSInteger)score;
 

@@ -64,6 +64,15 @@ static HJSpotlightManager *manager = nil;
 	UIButton *btn = (UIButton *)sender;
 	for (int i = 0; i< [_baseModel.buttonsModel.buttonList count]; i ++) {
 		ButtonItem *item = [_baseModel.buttonsModel.buttonList objectAtIndex:i];
+		
+		// 神策埋点
+		NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
+		NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
+		NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
+		NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
+		NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
+		NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
+		
 		if (item.itemTag == btn.tag) {
 			if (KButtonsActionType_CloseNudges == item.action.type) {
 				// 关闭Nudges
@@ -72,29 +81,21 @@ static HJSpotlightManager *manager = nil;
 				[self removeMonolayer];
 				[self stopTimer];
 				[[HJNudgesManager sharedInstance] showNextNudges];
-
+				
+				[_delegate SpotlightClickEventByType:item.action.urlJumpType Url:item.action.url isClose:YES invokeAction:invokeAction buttonName:text model:self.baseModel];
+				
 			} else if (KBorderStyle_LaunchURL == item.action.type) {
 				// 内部跳转
 				if (isEmptyString_Nd(item.action.url)) {
 					return;
 				}
 				if (_delegate && [_delegate conformsToProtocol:@protocol(SpotlightEventDelegate)]) {
-          if (_delegate && [_delegate respondsToSelector:@selector(SpotlightClickEventByType:Url:invokeAction:buttonName:model:)]) {
-            
-            // 神策埋点
-            NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
-            NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
-            NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
-            NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
-            NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
-            NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
-            
-            [_delegate SpotlightClickEventByType:item.action.urlJumpType Url:item.action.url invokeAction:invokeAction buttonName:text model:self.baseModel];
-            
-            // 埋点发送通知给RN
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":_baseModel.contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
-            
-            
+					if (_delegate && [_delegate respondsToSelector:@selector(SpotlightClickEventByType:Url:isClose:invokeAction:buttonName:model:)]) {
+						
+						[_delegate SpotlightClickEventByType:item.action.urlJumpType Url:item.action.url isClose:YES invokeAction:invokeAction buttonName:text model:self.baseModel];
+						
+						// 埋点发送通知给RN
+						[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":_baseModel.contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
 					}
 				}
 				[self stopCurrentPlayingView]; // 停止播放器
@@ -153,12 +154,12 @@ static HJSpotlightManager *manager = nil;
 
 // 删除预览的nudges
 - (void)removePreviewNudges {
-  if ([self.visiblePopTipViews count] > 0) {
-    CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
-    [popTipView dismissAnimated:YES];
-    [self.visiblePopTipViews removeObjectAtIndex:0];
-    [self stopCurrentPlayingView];
-  }
+	if ([self.visiblePopTipViews count] > 0) {
+		CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
+		[popTipView dismissAnimated:YES];
+		[self.visiblePopTipViews removeObjectAtIndex:0];
+		[self stopCurrentPlayingView];
+	}
 }
 
 // 停止播放，并且移除播放器
@@ -196,40 +197,40 @@ static HJSpotlightManager *manager = nil;
 	// 设置属性
 	NSInteger type = baseModel.ownPropModel.type;
 	CGFloat radius = 2; // 矩形默认 10
-//    if (KOwnPropType_Round == type) {
-//        // 圆形
-//        radius = view.frame.size.height / 2;
-//    }
+	//    if (KOwnPropType_Round == type) {
+	//        // 圆形
+	//        radius = view.frame.size.height / 2;
+	//    }
 	[self.monolayerView setAlphaRectParametersByRect:[self getAddress:view] SpotlightType:type radius:radius];
 	// 展示蒙层
-//    if (baseModel.backdropModel.enabled) {
-		if (baseModel.backdropModel.type == KBackgroundType_Image) {
-			// 图片
-		} else if (baseModel.backdropModel.type == KBackgroundType_Gradient) {
-			// 渐变
-			NSString *gradientStartColor = baseModel.backdropModel.gradientStartColor;
-			NSString *gradientEndColor = baseModel.backdropModel.gradientEndColor;
-			if (isEmptyString_Nd(gradientStartColor) || isEmptyString_Nd(gradientEndColor)) {
-				return;
-			}
-			[self.monolayerView addGradualLayerWithColors:@[(__bridge id)[UIColor colorWithHexString:gradientStartColor].CGColor,(__bridge id)[UIColor colorWithHexString:gradientEndColor].CGColor] startPoint:CGPointMake(0, 0.5) endPoint:CGPointMake(1, 0.5)];
-		} else {
-			// 实色
-			CGFloat alpha = 0.3;
-			if (baseModel.backdropModel.opacity > 0) {
-				alpha = baseModel.backdropModel.opacity / 100.0;
-			}
-			self.monolayerView.backgroundAlpha = alpha;
-			
-			if (isEmptyString_Nd(baseModel.backdropModel.backgroundColor)) {
-				self.monolayerView.bgroundColor = @"0x000000";
-			} else {
-				self.monolayerView.bgroundColor = baseModel.backdropModel.backgroundColor;
-			}
+	//    if (baseModel.backdropModel.enabled) {
+	if (baseModel.backdropModel.type == KBackgroundType_Image) {
+		// 图片
+	} else if (baseModel.backdropModel.type == KBackgroundType_Gradient) {
+		// 渐变
+		NSString *gradientStartColor = baseModel.backdropModel.gradientStartColor;
+		NSString *gradientEndColor = baseModel.backdropModel.gradientEndColor;
+		if (isEmptyString_Nd(gradientStartColor) || isEmptyString_Nd(gradientEndColor)) {
+			return;
 		}
-//    }
-
-//    [kAppDelegate.window addSubview:self.monolayerView];
+		[self.monolayerView addGradualLayerWithColors:@[(__bridge id)[UIColor colorWithHexString:gradientStartColor].CGColor,(__bridge id)[UIColor colorWithHexString:gradientEndColor].CGColor] startPoint:CGPointMake(0, 0.5) endPoint:CGPointMake(1, 0.5)];
+	} else {
+		// 实色
+		CGFloat alpha = 0.3;
+		if (baseModel.backdropModel.opacity > 0) {
+			alpha = baseModel.backdropModel.opacity / 100.0;
+		}
+		self.monolayerView.backgroundAlpha = alpha;
+		
+		if (isEmptyString_Nd(baseModel.backdropModel.backgroundColor)) {
+			self.monolayerView.bgroundColor = @"0x000000";
+		} else {
+			self.monolayerView.bgroundColor = baseModel.backdropModel.backgroundColor;
+		}
+	}
+	//    }
+	
+	//    [kAppDelegate.window addSubview:self.monolayerView];
 	[[TKUtils topViewController].view addSubview:self.monolayerView];
 	
 #pragma mark -- 自定义view
@@ -331,8 +332,8 @@ static HJSpotlightManager *manager = nil;
 			titleLab.attributedText = content;
 		}
 		// 计算标题高度
-//        [titleLab sizeToFit];
-//        CGSize labelsize =[titleLab sizeThatFits:CGSizeMake(nWidth, CGFLOAT_MAX)];
+		//        [titleLab sizeToFit];
+		//        CGSize labelsize =[titleLab sizeThatFits:CGSizeMake(nWidth, CGFLOAT_MAX)];
 		
 		CGSize titleSize = [TKUtils sizeWithFont:titleLab.font maxSize:CGSizeMake(nWidth-20, MAXFLOAT) string:baseModel.titleModel.content];
 		height_title = titleSize.height;
@@ -344,7 +345,7 @@ static HJSpotlightManager *manager = nil;
 			make.height.equalTo(@(height_title));
 		}];
 		iViewCount = iViewCount + 1;
-
+		
 	} else {
 		[titleLab mas_makeConstraints:^(MASConstraintMaker *make) {
 			make.leading.equalTo(customView.mas_leading).offset(Padding_Spacing);
@@ -478,7 +479,7 @@ static HJSpotlightManager *manager = nil;
 		//            ((AppDelegate*)[[UIApplication sharedApplication] delegate]).allowOrentitaionRotation = isFullScreen;
 		//        };
 		/// 播放完成
-    __weak __typeof(&*self)weakSelf = self;
+		__weak __typeof(&*self)weakSelf = self;
 		self.player.playerDidToEnd = ^(id  _Nonnull asset) {
 			[weakSelf.player.currentPlayerManager replay];
 			[weakSelf.player playTheNext];
@@ -580,7 +581,7 @@ static HJSpotlightManager *manager = nil;
 			make.top.equalTo(self.containerView.mas_bottom).offset(0);
 		}];
 	}
-
+	
 	
 	
 	
@@ -619,7 +620,7 @@ static HJSpotlightManager *manager = nil;
 					// 可配布局
 					if ([align isEqualToString:@"left"]) { // 左边
 						if (i == 0) {
-						   
+							
 							[btn mas_makeConstraints:^(MASConstraintMaker *make) {
 								make.leading.equalTo(customView.mas_leading).offset(Padding_Spacing);
 								make.top.equalTo(imgContentView.mas_bottom).offset(View_Spacing);
@@ -640,12 +641,12 @@ static HJSpotlightManager *manager = nil;
 					} else if ([align isEqualToString:@"right"]) { // 右边
 						if (i == 0) {
 							
-								[btn mas_makeConstraints:^(MASConstraintMaker *make) {
-									make.trailing.equalTo(customView.mas_trailing).offset(-Padding_Spacing);
-									make.top.equalTo(imgContentView.mas_bottom).offset(View_Spacing);
-									make.height.mas_equalTo(Button_height);
-									make.width.mas_equalTo(titleSize.width);
-								}];
+							[btn mas_makeConstraints:^(MASConstraintMaker *make) {
+								make.trailing.equalTo(customView.mas_trailing).offset(-Padding_Spacing);
+								make.top.equalTo(imgContentView.mas_bottom).offset(View_Spacing);
+								make.height.mas_equalTo(Button_height);
+								make.width.mas_equalTo(titleSize.width);
+							}];
 							
 							
 						} else {
@@ -661,12 +662,12 @@ static HJSpotlightManager *manager = nil;
 						// 默认 中间
 						if (i == 0) {
 							
-								[btn mas_makeConstraints:^(MASConstraintMaker *make) {
-									make.centerX.mas_equalTo(customView.centerX);
-									make.top.equalTo(imgContentView.mas_bottom).offset(View_Spacing);
-									make.height.mas_equalTo(Button_height);
-									make.width.mas_equalTo(titleSize.width);
-								}];
+							[btn mas_makeConstraints:^(MASConstraintMaker *make) {
+								make.centerX.mas_equalTo(customView.centerX);
+								make.top.equalTo(imgContentView.mas_bottom).offset(View_Spacing);
+								make.height.mas_equalTo(Button_height);
+								make.width.mas_equalTo(titleSize.width);
+							}];
 							
 							
 						} else {
@@ -683,12 +684,12 @@ static HJSpotlightManager *manager = nil;
 					// 固定布局
 					if (i == 0) {
 						
-							[btn mas_makeConstraints:^(MASConstraintMaker *make) {
-								make.leading.equalTo(customView.mas_leading).offset(Padding_Spacing);
-								make.trailing.equalTo(customView.mas_trailing).offset(-Padding_Spacing);
-								make.top.equalTo(imgContentView.mas_bottom).offset(View_Spacing);
-								make.height.mas_equalTo(Button_height);
-							}];
+						[btn mas_makeConstraints:^(MASConstraintMaker *make) {
+							make.leading.equalTo(customView.mas_leading).offset(Padding_Spacing);
+							make.trailing.equalTo(customView.mas_trailing).offset(-Padding_Spacing);
+							make.top.equalTo(imgContentView.mas_bottom).offset(View_Spacing);
+							make.height.mas_equalTo(Button_height);
+						}];
 						
 						
 					} else {
@@ -778,21 +779,21 @@ static HJSpotlightManager *manager = nil;
 				// 边框样式
 				if (item.buttonStyle.borderStyle == KBorderStyle_dashed) {
 					// 虚线
-//                    CAShapeLayer*border = [CAShapeLayer layer];
-//                    border.strokeColor=[UIColor colorWithHexString:@"#D5D5D5"].CGColor;\
-//                    border.fillColor= [UIColor redColor].CGColor;
-//                    border.path= [UIBezierPath bezierPathWithRect:CGRectMake(0, 0 , titleSize.width + 10, Button_height)].CGPath;
-//                    border.frame= CGRectMake(0, 0 , titleSize.width + 10, Button_height);
-//                    //虚线的宽度
-//                    border.lineWidth = 2.0f;
-//                    //设置线条的样式
-//                    border.lineCap = @"square";
-//                    //设置虚线的间隔
-//                    border.lineDashPattern=@[@5,@2];
-//                    [btn.layer addSublayer:border];
+					//                    CAShapeLayer*border = [CAShapeLayer layer];
+					//                    border.strokeColor=[UIColor colorWithHexString:@"#D5D5D5"].CGColor;\
+					//                    border.fillColor= [UIColor redColor].CGColor;
+					//                    border.path= [UIBezierPath bezierPathWithRect:CGRectMake(0, 0 , titleSize.width + 10, Button_height)].CGPath;
+					//                    border.frame= CGRectMake(0, 0 , titleSize.width + 10, Button_height);
+					//                    //虚线的宽度
+					//                    border.lineWidth = 2.0f;
+					//                    //设置线条的样式
+					//                    border.lineCap = @"square";
+					//                    //设置虚线的间隔
+					//                    border.lineDashPattern=@[@5,@2];
+					//                    [btn.layer addSublayer:border];
 					
 					
-//                    [self drawDashLine:btn viewFrame:CGRectMake(0, 0 , titleSize.width + 10, Button_height) viewHeight:Button_height viewWidth:titleSize.width + 10 lineLength:5 lineSpacing:2 lineColor:[UIColor redColor]];
+					//                    [self drawDashLine:btn viewFrame:CGRectMake(0, 0 , titleSize.width + 10, Button_height) viewHeight:Button_height viewWidth:titleSize.width + 10 lineLength:5 lineSpacing:2 lineColor:[UIColor redColor]];
 					
 				} else if (item.buttonStyle.borderStyle == KBorderStyle_dotted) {
 					// 点状
@@ -804,7 +805,7 @@ static HJSpotlightManager *manager = nil;
 			}
 		}
 	}
-
+	
 	// 计算Nudges frame
 	customView.frame = CGRectMake(0, 0, nWidth, h_dissButton + height_title + h_body + height_Video + height_image + [baseModel.buttonsModel.buttonList count] * Button_height + iViewCount * View_Spacing + View_Spacing);
 #pragma mark -- 构造nudges view
@@ -885,7 +886,7 @@ static HJSpotlightManager *manager = nil;
 		}
 	}
 	popTipView.cornerRadius = fCornerRadius;
-
+	
 	if (!isEmptyString_Nd(baseModel.borderModel.borderColor)) {
 		popTipView.borderColor = [UIColor colorWithHexString:baseModel.borderModel.borderColor];
 	}
@@ -896,14 +897,14 @@ static HJSpotlightManager *manager = nil;
 	}
 	
 	// 弹出Nudges
-//    [popTipView presentPointingAtView:view inView:kAppDelegate.window animated:YES];
+	//    [popTipView presentPointingAtView:view inView:kAppDelegate.window animated:YES];
 	[[TKUtils topViewController].tabBarController.view bringSubviewToFront:view];
 	[popTipView presentPointingAtView:view inView:[TKUtils topViewController].view animated:NO];
 	
 	
 	NSString *contactId = isEmptyString_Nd(baseModel.contactId)?@"":baseModel.contactId;
 	NSString *nudgesName = isEmptyString_Nd(baseModel.nudgesName)?@"":baseModel.nudgesName;
-    NSString *pageName = isEmptyString_Nd(baseModel.pageName)?@"":baseModel.pageName;
+	NSString *pageName = isEmptyString_Nd(baseModel.pageName)?@"":baseModel.pageName;
 	
 	// 回调
 	if (_delegate && [_delegate conformsToProtocol:@protocol(SpotlightEventDelegate)]) {
@@ -911,12 +912,12 @@ static HJSpotlightManager *manager = nil;
 			[_delegate SpotlightShowEventByNudgesId:baseModel.nudgesId nudgesName:nudgesName nudgesType:baseModel.nudgesType eventTypeId:@"" contactId:baseModel.contactId campaignCode:baseModel.campaignId batchId:@"" source:@"1" pageName:pageName];
 		}
 	}
-  
-  // 发送通知给RN
-  [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgesShowEvent",@"body":@{@"nudgesId":contactId,@"nudgesName":nudgesName,@"nudgesType":@(baseModel.nudgesType),@"eventTypeId":@"onNudgesShow"}}];
-  
-  // 神策埋点 埋点发送通知给RN
-  [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
+	
+	// 发送通知给RN
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgesShowEvent",@"body":@{@"nudgesId":contactId,@"nudgesName":nudgesName,@"nudgesType":@(baseModel.nudgesType),@"eventTypeId":@"onNudgesShow"}}];
+	
+	// 神策埋点 埋点发送通知给RN
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
 	
 	// 显示后上报接口
 	[[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
@@ -931,19 +932,19 @@ static HJSpotlightManager *manager = nil;
 	}
 	if ([baseModel.dismiss containsString:@"A"]) {
 		// 关闭按钮
-//        UIButton *dissButton = [UIButton buttonWithType:UIButtonTypeSystem];
-//        [popTipView addSubview:dissButton];
-//        [dissButton addTarget:self action:@selector(dissMissButtonClick:) forControlEvents:UIControlEventTouchUpInside];
-//        dissButton.frame = CGRectMake(nWidth-20, -20, 30, 30);
-//        [dissButton setBackgroundColor:[UIColor redColor]];
+		//        UIButton *dissButton = [UIButton buttonWithType:UIButtonTypeSystem];
+		//        [popTipView addSubview:dissButton];
+		//        [dissButton addTarget:self action:@selector(dissMissButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+		//        dissButton.frame = CGRectMake(nWidth-20, -20, 30, 30);
+		//        [dissButton setBackgroundColor:[UIColor redColor]];
 	}
 	if ([baseModel.dismiss containsString:@"B"]) {
 		// 起定时器 5秒后关闭
 		self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
 		dispatch_source_set_timer(self.timer,
-									  dispatch_time(DISPATCH_TIME_NOW, 5.0 * NSEC_PER_SEC),
-									  1.0 * NSEC_PER_SEC,
-									  0);
+								  dispatch_time(DISPATCH_TIME_NOW, 5.0 * NSEC_PER_SEC),
+								  1.0 * NSEC_PER_SEC,
+								  0);
 		dispatch_source_set_event_handler(self.timer, ^{
 			// 关闭Nudges
 			[self stopCurrentPlayingView]; // 停止播放器
@@ -984,7 +985,7 @@ static HJSpotlightManager *manager = nil;
 	for (CMPopTipView *popTipView in self.visiblePopTipViews) {
 		id targetObject = popTipView.targetObject;
 		[popTipView dismissAnimated:NO];
-
+		
 		if ([targetObject isKindOfClass:[UIButton class]]) {
 			UIButton *button = (UIButton *)targetObject;
 			[popTipView presentPointingAtView:button inView:kAppDelegate.window animated:NO];

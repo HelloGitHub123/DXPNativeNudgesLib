@@ -58,10 +58,21 @@ static HJFloatingAtionManager *manager = nil;
     NSArray<ButtonItem *> *buttonItemList = buttonsModel.buttonList;
     if (!IsArrEmpty_Nd(buttonItemList)) {
         ButtonItem *item = [buttonItemList objectAtIndex:0];
+		
+		// 神策埋点
+		NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
+		NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
+		NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
+		NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
+		NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
+		NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
+		
         if (KButtonsActionType_CloseNudges == item.action.type) {
             // 关闭Nudges
             [self removeNudges];
             [[HJNudgesManager sharedInstance] showNextNudges];
+			
+			[_delegate FloatingAtionClickEventByType:item.action.urlJumpType Url:item.action.url isClose:YES invokeAction:invokeAction buttonName:text model:self.baseModel];
 
         } else if (KBorderStyle_LaunchURL == item.action.type) {
             // 内部跳转
@@ -72,15 +83,9 @@ static HJFloatingAtionManager *manager = nil;
               if (_delegate && [_delegate respondsToSelector:@selector(FloatingAtionClickEventByType:Url:invokeAction:buttonName:model:)]) {
 //                    [_delegate FloatingAtionClickEventByType:item.action.urlJumpType Url:item.action.url];
                 
-                // 神策埋点
-                NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
-                NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
-                NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
-                NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
-                NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
-                NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
+               
                 
-                [_delegate FloatingAtionClickEventByType:item.action.urlJumpType Url:item.action.url invokeAction:invokeAction buttonName:text model:self.baseModel];
+                [_delegate FloatingAtionClickEventByType:item.action.urlJumpType Url:item.action.url isClose:NO invokeAction:invokeAction buttonName:text model:self.baseModel];
                 
                 // 埋点发送通知给RN
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":_baseModel.contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];

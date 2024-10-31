@@ -6,10 +6,9 @@
 //  Nudges 管理大单例
 
 #import <Foundation/Foundation.h>
-#import "NudgesBaseModel.h"
-#import "NudgesModel.h"
+//#import "NudgesBaseModel.h"
+//#import "NudgesModel.h"
 #import "MonolayerModel.h"
-#import "FrequencyModel.h"
 #import "NudgesConfigParametersModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -22,9 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 // eg:Nudges 配置参数 模型
 @property (nonatomic, strong) NudgesConfigParametersModel *configParametersModel;
-
-/// 频次model
-@property (nonatomic, strong) FrequencyModel *frequencyModel;
 
 // nudges显示后是否进行上报
 @property (nonatomic, assign) BOOL isReported;
@@ -89,7 +85,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// eg: 数据库根据界面查找Nudges
 /// @param pageName 页面名称
 //- (void)selectNudgesDBWithPageName:(NSMutableArray *)nudgesList;
-- (void)selectNudgesDBWithPageName:(NudgesModel *)model;
+//- (void)selectNudgesDBWithPageName:(NudgesModel *)model;
 
 /// eg:当发生页面重载或者新页面时候，调用
 /// @param pageName 页面名称
