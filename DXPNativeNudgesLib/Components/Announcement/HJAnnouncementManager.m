@@ -60,108 +60,63 @@ static HJAnnouncementManager *manager = nil;
     return self;
 }
 
+// 按钮事件
 - (void)ButtonClickAction:(id)sender {
-    UIButton *btn = (UIButton *)sender;
-    for (int i = 0; i< [_baseModel.buttonsModel.buttonList count]; i ++) {
-        ButtonItem *item = [_baseModel.buttonsModel.buttonList objectAtIndex:i];
-		
-		// 神策埋点
-		NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
-		NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
-		NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
-		NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
-		NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
-		NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
-		
-        if (item.itemTag == btn.tag) {
-            if (KButtonsActionType_CloseNudges == item.action.type) {
-                // 关闭Nudges
-                if (_baseModel.positionModel.position == KPosition_Middle) {
-                    if (self.customView) {
-                        [self.customView removeFromSuperview];
-                        self.customView = nil;
-                    }
-                }
-                if (_baseModel.positionModel.position == KPosition_bottom) {
-                    if (self.backView) {
-                        [self.backView removeFromSuperview];
-                        self.backView = nil;
-                    }
-                }
-                
-                [self stopCurrentPlayingView]; // 停止播放器
-                [self removeNudges];
-                [self removeMonolayer];
-                [self stopTimer];
-                [[HJNudgesManager sharedInstance] showNextNudges];
-                
-				[_delegate AnnouncementClickEventByType:item.action.urlJumpType Url:item.action.url isClose:YES invokeAction:invokeAction buttonName:text model:self.baseModel];
-
-            } else if (KBorderStyle_LaunchURL == item.action.type) {
-                // 内部跳转
-                if (isEmptyString_Nd(item.action.url)) {
-                    return;
-                }
-                if (_delegate && [_delegate conformsToProtocol:@protocol(AnnouncementEventDelegate)]) {
-                  if (_delegate && [_delegate respondsToSelector:@selector(AnnouncementClickEventByType:Url:invokeAction:buttonName:model:)]) {
-                    //                        [_delegate AnnouncementClickEventByType:item.action.urlJumpType Url:item.action.url];
-                    [_delegate AnnouncementClickEventByType:item.action.urlJumpType Url:item.action.url isClose:NO invokeAction:invokeAction buttonName:text model:self.baseModel];
-                    
-                    // 埋点发送通知给RN
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":_baseModel.contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
-                  }
-                }
-                if (_baseModel.positionModel.position == KPosition_Middle) {
-                    if (self.customView) {
-                        [self.customView removeFromSuperview];
-                        self.customView = nil;
-                    }
-                }
-                if (_baseModel.positionModel.position == KPosition_bottom) {
-                    if (self.backView) {
-                        [self.backView removeFromSuperview];
-                        self.backView = nil;
-                    }
-                }
-                [self stopCurrentPlayingView]; // 停止播放器
-                [self removeNudges];
-                [self removeMonolayer];
-                [self stopTimer]; // 停止定时器
-                
-            } else if (KBorderStyle_InvokeAction == item.action.type) {
-                // 调用方法
-                if ([item.action.invokeAction isEqualToString:@"OPEN_APP_STORE"]) {
-                    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"itms-apps://itunes.apple.com/app/id6465894875"] options:@{} completionHandler:^(BOOL success) {
-                    }];
-                    // 调用方法 feedback
-                    if (_delegate && [_delegate conformsToProtocol:@protocol(AnnouncementEventDelegate)]) {
-                        if (_delegate && [_delegate respondsToSelector:@selector(AnnouncementSubmitByScore:)]) {
-                            [_delegate AnnouncementSubmitByScore:0];
-                        }
-                    }
-                    
-                    // 关闭Nudges
-                    if (_baseModel.positionModel.position == KPosition_Middle) {
-                        if (self.customView) {
-                            [self.customView removeFromSuperview];
-                            self.customView = nil;
-                        }
-                    }
-                    if (_baseModel.positionModel.position == KPosition_bottom) {
-                        if (self.backView) {
-                            [self.backView removeFromSuperview];
-                            self.backView = nil;
-                        }
-                    }
-                    
-                    [self stopCurrentPlayingView]; // 停止播放器
-                    [self removeNudges];
-                    [self removeMonolayer];
-                    [self stopTimer];
-                }
-            }
-        }
-    }
+	UIButton *btn = (UIButton *)sender;
+	for (int i = 0; i< [_baseModel.buttonsModel.buttonList count]; i ++) {
+		ButtonItem *item = [_baseModel.buttonsModel.buttonList objectAtIndex:i];
+		BOOL isClose = NO;// 是否关闭按钮
+		if (item.itemTag == btn.tag) {
+			if (KButtonsActionType_CloseNudges == item.action.type) {
+				// 关闭Nudges
+				isClose = YES;
+			} else if (KBorderStyle_LaunchURL == item.action.type) {
+				isClose = NO;
+			} else if (KBorderStyle_InvokeAction == item.action.type) {
+				// 调用方法
+				isClose = NO;
+			}
+			
+			if (_baseModel.positionModel.position == KPosition_Middle) {
+				if (self.customView) {
+					[self.customView removeFromSuperview];
+					self.customView = nil;
+				}
+			}
+			if (_baseModel.positionModel.position == KPosition_bottom) {
+				if (self.backView) {
+					[self.backView removeFromSuperview];
+					self.backView = nil;
+				}
+			}
+			
+			[self stopCurrentPlayingView]; // 停止播放器
+			[self removeNudges];
+			[self removeMonolayer];
+			[self stopTimer];
+			[[HJNudgesManager sharedInstance] showNextNudges];
+			
+			// 神策埋点
+			NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
+			NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
+			NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
+			NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
+			NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
+			NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
+			
+			if (_delegate && [_delegate conformsToProtocol:@protocol(AnnouncementEventDelegate)]) {
+				if (_delegate && [_delegate respondsToSelector:@selector(AnnouncementClickEventByActionModel:isClose:buttonName:nudgeModel:)]) {
+				  [_delegate AnnouncementClickEventByActionModel:item.action isClose:isClose buttonName:text nudgeModel:_baseModel];
+										
+					// 埋点发送通知给RN
+					[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"0",@"jumpUrl":url,@"invokeAction":invokeAction,@"isClose":@(isClose),@"buttonName":text,@"source":@"1",@"pageName":pageName}}];
+					
+					
+			  }
+			}
+			
+		}
+	}
 }
 
 - (void)setBaseModel:(NudgesBaseModel *)baseModel {
@@ -281,23 +236,19 @@ static HJAnnouncementManager *manager = nil;
         [NdHJNudgesDBManager updateNudgesIsShowWithNudgesId:_baseModel.nudgesId model:_nudgesModel];
     }
   
-  NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
-  NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
-  NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
+	NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
+	NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
+	NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
+	  
+	  // 回调
+	  if (_delegate && [_delegate conformsToProtocol:@protocol(AnnouncementEventDelegate)]) {
+		  if (_delegate && [_delegate respondsToSelector:@selector(AnnouncementShowEventByNudgesModel:batchId:source:)]) {
+			  [_delegate AnnouncementShowEventByNudgesModel:_baseModel batchId:@"0" source:@"1"];
+		  }
+	  }
 	
-	
-	// 回调
-	if (_delegate && [_delegate conformsToProtocol:@protocol(AnnouncementEventDelegate)]) {
-		if (_delegate && [_delegate respondsToSelector:@selector(AnnouncementShowEventByNudgesId:nudgesName:nudgesType:eventTypeId:contactId:campaignCode:batchId:source:pageName:)]) {
-			[_delegate AnnouncementShowEventByNudgesId:_baseModel.nudgesId nudgesName:nudgesName nudgesType:_baseModel.nudgesType eventTypeId:@"" contactId:_baseModel.contactId campaignCode:_baseModel.campaignId batchId:@"" source:@"1" pageName:pageName];
-		}
-	}
-	
-  
-  [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgesShowEvent",@"body":@{@"nudgesId":contactId,@"nudgesName":nudgesName,@"nudgesType":@(_baseModel.nudgesType),@"eventTypeId":@"onNudgesShow"}}];
-  
-  // 埋点发送通知给RN
-  [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
+	// 埋点发送通知给RN
+	  [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesType":@(_baseModel.nudgesType),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"0",@"source":@"1",@"pageName":pageName}}];
     
   // 显示后上报接口
   [[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:_baseModel.nudgesId contactId:_baseModel.contactId];

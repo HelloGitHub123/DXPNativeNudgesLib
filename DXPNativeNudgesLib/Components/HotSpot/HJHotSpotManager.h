@@ -14,12 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol HotSpotEventDelegate <NSObject>
 
 /// eg: 按钮点击事件
-/// @param jumpType 跳转类型
-/// @param url 跳转路由 or 路径
-- (void)HotSpotClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(NSString *)invokeAction buttonName:(NSString *)buttonName model:(NudgesBaseModel *)model;
+- (void)HotSpotClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model;
 
-// nudges显示出来后回调代理
-- (void)HotSpotShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName;
+- (void)HotSpotShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source;
 @end
 
 
@@ -33,10 +30,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NudgesModel *nudgesModel;
 
+@property (nonatomic, strong) UIView *findView;
+
 + (instancetype)sharedInstance;
 
 // 删除预览的nudges
 - (void)removePreviewNudges;
+
+- (void)startConstructsNudgesView;
+
+/// eg: 移除对应的ToolTips
+- (void)removeNudges;
+
+/// eg: 停止定时器
+- (void)stopTimer;
 
 @end
 

@@ -130,6 +130,7 @@
     
     if (caninputlen >= 0)
     {
+		self.contentText = comcatstr;
         return YES;
     }
     else

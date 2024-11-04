@@ -21,6 +21,6 @@
 @property (nonatomic, assign) BOOL isSigleLine;
 
 @property (nonatomic, strong) UILabel *placeholderLabel;
-
-
+// 输入的内容值
+@property (nonatomic, copy) NSString *contentText;
 @end

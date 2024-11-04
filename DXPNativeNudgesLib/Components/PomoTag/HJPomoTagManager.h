@@ -17,6 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param jumpType 跳转类型
 /// @param url 跳转路由 or 路径
 - (void)PomoTagClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url;
+
+// nudges显示出来后回调代理
+- (void)PomoTagShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source;
 @end
 
 @interface HJPomoTagManager : NSObject

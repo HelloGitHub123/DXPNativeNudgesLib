@@ -10,10 +10,11 @@
 //#import "NudgesModel.h"
 #import "MonolayerModel.h"
 #import "NudgesConfigParametersModel.h"
+#import "ActionModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-
+@class NudgesBaseModel;
 @interface HJNudgesManager : NSObject
 
 /// eg: [必须]身份标识身份标识类型： 1、默认mccm dmc  2、ceg
@@ -39,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
  *  bodyDic: 参数字典  包含：nudgesId, nudgesName, nudgesType, buttonName, invokeAction, url, schemeType, eventTypeId
  *
  */
-@property (nonatomic, copy) void (^buttonClickEventBlock)(NSString *eventName, NSDictionary *bodyDic);
+@property (nonatomic, copy) void (^buttonClickEventBlock)(ActionModel *actionModel, BOOL isClose, NSString *buttonName,NSString *inputText, NudgesBaseModel *model1);
 
 /**
  *  nudegs 展示事件 (兼容埋点事件)
@@ -52,7 +53,17 @@ NS_ASSUME_NONNULL_BEGIN
  *   campaignCode:活动ID
  *   pageName: 页面名称
  */
-@property (nonatomic, copy) void (^nudgesShowEventBlock)(NSInteger nudgesId, NSString *nudgesName, KNudgesType nudgesType, NSString *eventTypeId, NSString *contactId, NSInteger campaignCode, NSString *batchId, NSString *source, NSString *pageName);
+@property (nonatomic, copy) void (^nudgesShowEventBlock)(NudgesBaseModel *model, NSString *batchId, NSString *source);
+
+/**
+ * Feedback事件
+ *  eventName: 事件名称
+ *  bodyDic: 参数字典  包含：nudgesId, nudgesName, nudgesType, buttonName, invokeAction, url, schemeType, eventTypeId
+ *  score  评分
+ *  thumbResult  点赞点踩
+ *
+ */
+@property (nonatomic, copy) void (^feedBackEventBlock)(NudgesBaseModel *model, NSString *batchId, NSString *source, CGFloat score, NSMutableArray *optionList, NSString *thumbResult);
 
 
 + (instancetype)sharedInstance;

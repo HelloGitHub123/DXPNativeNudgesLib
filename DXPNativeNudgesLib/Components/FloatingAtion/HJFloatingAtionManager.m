@@ -54,49 +54,40 @@ static HJFloatingAtionManager *manager = nil;
 
 #pragma mark -- 方法
 - (void)suspensionButtonClick:(id)sender {
-    ButtonsModel *buttonsModel = _baseModel.buttonsModel;
-    NSArray<ButtonItem *> *buttonItemList = buttonsModel.buttonList;
-    if (!IsArrEmpty_Nd(buttonItemList)) {
-        ButtonItem *item = [buttonItemList objectAtIndex:0];
+	ButtonsModel *buttonsModel = _baseModel.buttonsModel;
+	NSArray<ButtonItem *> *buttonItemList = buttonsModel.buttonList;
+	if (!IsArrEmpty_Nd(buttonItemList)) {
+		ButtonItem *item = [buttonItemList objectAtIndex:0];
+		BOOL isClose = NO;// 是否关闭按钮
+		if (KButtonsActionType_CloseNudges == item.action.type) {
+			// 关闭Nudges
+			isClose = YES;
+		} else if (KBorderStyle_LaunchURL == item.action.type) {
+			// 内部跳转
+		} else if (KBorderStyle_InvokeAction == item.action.type) {
+			// 调用方法
+		}
 		
-		// 神策埋点
+		[self removeNudges];
+		[[HJNudgesManager sharedInstance] showNextNudges];
+		
+		// 回调
 		NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
 		NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
 		NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
 		NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
 		NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
 		NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
+	
+		if (_delegate && [_delegate conformsToProtocol:@protocol(FloatingAtionEventDelegate)]) {
+			if (_delegate && [_delegate respondsToSelector:@selector(FloatingAtionClickEventByActionModel:isClose:buttonName:nudgeModel:)]) {
+				[_delegate FloatingAtionClickEventByActionModel:item.action isClose:isClose buttonName:text nudgeModel:_baseModel];
+			}
+		}
 		
-        if (KButtonsActionType_CloseNudges == item.action.type) {
-            // 关闭Nudges
-            [self removeNudges];
-            [[HJNudgesManager sharedInstance] showNextNudges];
-			
-			[_delegate FloatingAtionClickEventByType:item.action.urlJumpType Url:item.action.url isClose:YES invokeAction:invokeAction buttonName:text model:self.baseModel];
-
-        } else if (KBorderStyle_LaunchURL == item.action.type) {
-            // 内部跳转
-            if (isEmptyString_Nd(item.action.url)) {
-                return;
-            }
-            if (_delegate && [_delegate conformsToProtocol:@protocol(FloatingAtionEventDelegate)]) {
-              if (_delegate && [_delegate respondsToSelector:@selector(FloatingAtionClickEventByType:Url:invokeAction:buttonName:model:)]) {
-//                    [_delegate FloatingAtionClickEventByType:item.action.urlJumpType Url:item.action.url];
-                
-               
-                
-                [_delegate FloatingAtionClickEventByType:item.action.urlJumpType Url:item.action.url isClose:NO invokeAction:invokeAction buttonName:text model:self.baseModel];
-                
-                // 埋点发送通知给RN
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":_baseModel.contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
-
-                }
-            }
-            [self removeNudges];
-        } else if (KBorderStyle_InvokeAction == item.action.type) {
-            // 调用方法
-        }
-    }
+		// 埋点发送通知给RN
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"0",@"jumpUrl":url,@"invokeAction":invokeAction,@"isClose":@(isClose),@"buttonName":text,@"source":@"1",@"pageName":pageName}}];
+	}
 }
 
 // 移除当前的页面的浮点按钮
@@ -261,9 +252,9 @@ static HJFloatingAtionManager *manager = nil;
             }
             UIImage *image = [UIImage imageWithData:data];
             //            NSInteger h_image = 8+image.size.height+8;
-            //            NSInteger w_image = 8+image.size.width+8;
+                        NSInteger w_image = 8+image.size.width+8;
             NSInteger h_image = 40;
-            NSInteger w_image = 40;
+//            NSInteger w_image = 40;
         
             if ([buttonsModel.layout.align isEqualToString:@"middle"]) {
                 // 中间
@@ -315,19 +306,15 @@ static HJFloatingAtionManager *manager = nil;
       NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
 		
 		
-		// 回调
+		// 显示回调
 		if (_delegate && [_delegate conformsToProtocol:@protocol(FloatingAtionEventDelegate)]) {
-			if (_delegate && [_delegate respondsToSelector:@selector(FloatingAtionShowEventByNudgesId:nudgesName:nudgesType:eventTypeId:contactId:campaignCode:batchId:source:pageName:)]) {
-				[_delegate FloatingAtionShowEventByNudgesId:baseModel.nudgesId nudgesName:nudgesName nudgesType:baseModel.nudgesType eventTypeId:@"" contactId:baseModel.contactId campaignCode:baseModel.campaignId batchId:@"" source:@"1" pageName:pageName];
+			if (_delegate && [_delegate respondsToSelector:@selector(FloatingAtionShowEventByNudgesModel:batchId:source:)]) {
+				[_delegate FloatingAtionShowEventByNudgesModel:baseModel batchId:@"0" source:@"1"];
 			}
 		}
 		
-		
-      
-      [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgesShowEvent",@"body":@{@"nudgesId":contactId,@"nudgesName":nudgesName,@"nudgesType":@(_baseModel.nudgesType),@"eventTypeId":@"onNudgesShow"}}];
-      
-      // 埋点发送通知给RN
-      [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"",@"source":@"1",@"pageName":pageName}}];
+		// 埋点发送通知给RN
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(baseModel.nudgesId),@"nudgesType":@(baseModel.nudgesType),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(baseModel.campaignId),@"batchId":@"0",@"source":@"1",@"pageName":pageName}}];
     }
 }
 

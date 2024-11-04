@@ -28,6 +28,7 @@
 #import "NdIMDBManager.h"
 #import <DXPFontManagerLib/FontManager.h>
 #import "FrequencyModel.h"
+#import "NudgesBaseModel.h"
 
 static HJNudgesManager *manager = nil;
 
@@ -509,7 +510,7 @@ static HJNudgesManager *manager = nil;
 	NudgesBaseModel *baseModel = [[NudgesBaseModel alloc] initWithMsgModel:model];
 	self.currentBaseModel = baseModel;
 	
-	if (baseModel.nudgesType == KNudgesType_NPS) {
+	if (baseModel.nudgesType == KNudgesType_NPS || baseModel.nudgesType == KNudgesType_Forms || baseModel.nudgesType == KNudgesType_Rate || baseModel.nudgesType == KNudgesType_FunnelReminders) {
 		[self previewConstructsNudgesViewByFindView:nil isFindType:KNudgeFineType_Exist_Find];
 	} else {
 		// 检查是否存在当前页面
@@ -547,19 +548,23 @@ static HJNudgesManager *manager = nil;
 		return;
 	}
 	
+	if (self.currentModel.nudgesType == KNudgesType_FunnelReminders) {
+		[HJAnnouncementManager sharedInstance].nudgesModel = self.currentModel;
+		[HJAnnouncementManager sharedInstance].baseModel = self.currentBaseModel;
+		[HJAnnouncementManager sharedInstance].delegate = self;
+		return;
+	}
+	
 	if (type == KNudgeFineType_Exist_Find) {
 		// 类型匹配进行，显示
 		switch (self.currentModel.nudgesType) {
 			case KNudgesType_Hotspots: {
 				[HJHotSpotManager sharedInstance].nudgesModel = self.currentModel;
 				[HJHotSpotManager sharedInstance].baseModel = self.currentBaseModel;
+				[HJHotSpotManager sharedInstance].findView = findView;
 				[HJHotSpotManager sharedInstance].delegate = self;
-			}
-				break;
-			case KNudgesType_FunnelReminders: {
-				[HJAnnouncementManager sharedInstance].nudgesModel = self.currentModel;
-				[HJAnnouncementManager sharedInstance].baseModel = self.currentBaseModel;
-				[HJAnnouncementManager sharedInstance].delegate = self;
+				// 开始显示
+				[[HJHotSpotManager sharedInstance] startConstructsNudgesView];
 			}
 				break;
 			case KNudgesType_SpotLight: {
@@ -1138,49 +1143,41 @@ static HJNudgesManager *manager = nil;
 
 #pragma mark -- ToolTipsEventDelegate
 // 按钮点击事件
-- (void)ToolTipsClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(nonnull NSString *)invokeAction buttonName:(nonnull NSString *)buttonName model:(nonnull NudgesBaseModel *)model {
+- (void)ToolTipsClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model {
 	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
 	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
+//	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
+//	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
+//	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
+//	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
+	
+//	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
 	
 	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+		self.buttonClickEventBlock(actionModel, isClose, buttonName,@"", model);
 	}
 }
 
 // nudges显示出来后回调代理
-- (void)ToolTipsShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
+- (void)ToolTipsShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
 #pragma mark -- SpotlightEventDelegate
 // 按钮点击事件
-- (void)SpotlightClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(nonnull NSString *)invokeAction buttonName:(nonnull NSString *)buttonName model:(nonnull NudgesBaseModel *)model{
-	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
-	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
-	
+- (void)SpotlightClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model {
 	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+		self.buttonClickEventBlock(actionModel, isClose, buttonName,@"", model);
 	}
 }
 
 // nudges显示出来后回调代理
-- (void)SpotlightShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
-	
+- (void)SpotlightShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
@@ -1194,73 +1191,55 @@ static HJNudgesManager *manager = nil;
 	//  }
 }
 
-#pragma mark -- HotSpotEventDelegate
-// 按钮点击事件
-- (void)HotSpotClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(nonnull NSString *)invokeAction buttonName:(nonnull NSString *)buttonName model:(nonnull NudgesBaseModel *)model {
-	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
-	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
-	
-	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+- (void)PomoTagShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
+	if (self.nudgesShowEventBlock) {
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
-// nudges显示出来后回调代理
-- (void)HotSpotShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
-	
+#pragma mark -- HotSpotEventDelegate
+// 按钮点击事件
+- (void)HotSpotClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model {
+	if (self.buttonClickEventBlock) {
+		self.buttonClickEventBlock(actionModel, isClose, buttonName,@"", model);
+	}
+}
+
+- (void)HotSpotShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
 #pragma mark -- FloatingAtionEventDelegate
-- (void)FloatingAtionClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(nonnull NSString *)invokeAction buttonName:(nonnull NSString *)buttonName model:(nonnull NudgesBaseModel *)model{
-	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
-	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
-	
+- (void)FloatingAtionClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model {
 	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+		self.buttonClickEventBlock(actionModel, isClose, buttonName,@"", model);
 	}
 }
 
-// nudges显示出来后回调代理
-- (void)FloatingAtionShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
-	
+- (void)FloatingAtionShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
 #pragma mark -- NPSEventDelegate
-- (void)NPSClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(nonnull NSString *)invokeAction buttonName:(nonnull NSString *)buttonName model:(nonnull NudgesBaseModel *)model{
-	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
-	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
+- (void)NPSClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model score:(NSInteger)score optionList:(NSMutableArray *)optionList thumbResult:(NSString *)thumbResult {
 	
 	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+		self.buttonClickEventBlock(actionModel, isClose, buttonName,@"", model);
+	}
+	
+	if (self.feedBackEventBlock) {
+		self.feedBackEventBlock(model, @"0", @"1", score, optionList, thumbResult);
 	}
 }
 
 // nudges显示出来后回调代理
-- (void)NPSShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
-	
+- (void)NPSShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
@@ -1273,48 +1252,40 @@ static HJNudgesManager *manager = nil;
 }
 
 #pragma mark -- FeedBackEventDelegate
-- (void)FeedBackClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(nonnull NSString *)invokeAction buttonName:(nonnull NSString *)buttonName model:(nonnull NudgesBaseModel *)model {
-	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
-	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
+- (void)FeedBackClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName selectedOptionList:(NSMutableArray *)selectedOptionList FeedBackText:(NSString *)FeedBackText nudgeModel:(NudgesBaseModel *)model {
 	
 	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+		self.buttonClickEventBlock(actionModel, isClose, buttonName, FeedBackText, model);
+	}
+	
+	if (self.feedBackEventBlock) {
+		self.feedBackEventBlock(model, @"0", @"1", 0, selectedOptionList, @"");
 	}
 }
 
 // nudges显示出来后回调代理
-- (void)FeedBackShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
-	
+- (void)FeedBackShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
 #pragma mark -- RateEventDelegate
-- (void)RateClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(NSString *)invokeAction buttonName:(NSString *)buttonName model:(NudgesBaseModel *)model {
-	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
-	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
+- (void)RateClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName score:(CGFloat)score thumbResult:(NSString *)thumbResult nudgeModel:(NudgesBaseModel *)model {
 	
 	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+		self.buttonClickEventBlock(actionModel, isClose, buttonName, @"",model);
+	}
+	
+	if (self.feedBackEventBlock) {
+		self.feedBackEventBlock(model, @"0", @"1", score, @[].mutableCopy, thumbResult);
 	}
 }
 
 // nudges显示出来后回调代理
-- (void)RateShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
-	
+- (void)RateShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
@@ -1336,25 +1307,16 @@ static HJNudgesManager *manager = nil;
 	//  }
 }
 
-- (void)AnnouncementClickEventByType:(KButtonsUrlJumpType)jumpType Url:(NSString *)url isClose:(BOOL)isClose invokeAction:(nonnull NSString *)invokeAction buttonName:(nonnull NSString *)buttonName model:(nonnull NudgesBaseModel *)model {
-	
-	NSString *nudgesId = [NSString stringWithFormat:@"%ld",(long)model.nudgesId];
-	NSString *nudgesName = isEmptyString_Nd(model.nudgesName)?@"":model.nudgesName;
-	NSString *campaignCode = [NSString stringWithFormat:@"%ld",(long)model.campaignId];
-	NSString *pageName = isEmptyString_Nd(self.currentPageName)?@"":self.currentPageName;
-	
-	NSDictionary *bodyDic = @{@"nudgesId":nudgesId,@"nudgesName":nudgesName,@"pageName":pageName,@"contactId":model.contactId ,@"nudgesType":@(model.nudgesType),@"batchId":@"",@"source":@"1",@"buttonName":buttonName,@"isClose":@(isClose),@"campaignCode":campaignCode,@"invokeAction":invokeAction,@"jumpUrl":url,@"schemeType":@(jumpType),@"eventTypeId":@"onNudgesButtonClick"};
-	
+- (void)AnnouncementClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model {
 	if (self.buttonClickEventBlock) {
-		self.buttonClickEventBlock(@"ButtonClickEvent", bodyDic);
+		self.buttonClickEventBlock(actionModel, isClose, buttonName, @"",model);
 	}
 }
 
 // nudges显示出来后回调代理
-- (void)AnnouncementShowEventByNudgesId:(NSInteger)nudgesId nudgesName:(NSString *)nudgesName nudgesType:(KNudgesType)nudgesType eventTypeId:(NSString *)eventTypeId contactId:(NSString *)contactId campaignCode:(NSInteger)campaignCode batchId:(NSString *)batchId source:(NSString *)source pageName:(NSString *)pageName {
-	
+- (void)AnnouncementShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source {
 	if (self.nudgesShowEventBlock) {
-		self.nudgesShowEventBlock(nudgesId, nudgesName, nudgesType, eventTypeId, contactId, campaignCode, batchId, source, pageName);
+		self.nudgesShowEventBlock(model, batchId, source);
 	}
 }
 
