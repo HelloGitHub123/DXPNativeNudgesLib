@@ -11,13 +11,14 @@
 #import <YYCategories/YYCategories.h>
 #import "UIView+NdAddGradualLayer.h"
 #import "HJNudgesManager.h"
-#import "CMPopTipView.h"
+//#import "CMPopTipView.h"
 #import "UIImageView+ZFCache.h"
 #import "ZFUtilities.h"
 #import "TKUtils.h"
 #import "HJSliderView.h"
 #import "WKTextView.h"
 #import <DXPFontManagerLib/FontManager.h>
+#import "NSString+ndDate.h"
 
 #define Padding_Spacing 10
 #define View_Spacing  10 // view 之间的间距
@@ -26,14 +27,17 @@
 
 static HJNPSManager *manager = nil;
 
-@interface HJNPSManager ()<CMPopTipViewDelegate, MonolayerViewDelegate, SliderViewEventDelegate> {
+@interface HJNPSManager ()<MonolayerViewDelegate, SliderViewEventDelegate> {
+	NSString *showTimestamp;
 }
-@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
+//@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
 @property (nonatomic, strong) dispatch_source_t timer;
-@property (nonatomic, strong) CMPopTipView *popTipView;
+//@property (nonatomic, strong) CMPopTipView *popTipView;
 @property (nonatomic, strong) UIView *customView;
 @property (nonatomic, strong) UIView *backView;
-@property (nonatomic, assign) NSInteger resultNumber; // 评分结果
+@property (nonatomic, copy) NSString *resultNumber; // 评分结果
+
+@property (nonatomic, strong) WKTextView *textView;
 @end
 
 @implementation HJNPSManager
@@ -49,7 +53,7 @@ static HJNPSManager *manager = nil;
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.visiblePopTipViews = [[NSMutableArray alloc] init];
+//        self.visiblePopTipViews = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -93,18 +97,23 @@ static HJNPSManager *manager = nil;
 			NSString *text = isEmptyString_Nd(item.text.content)?@"":item.text.content;
 			NSString *url = isEmptyString_Nd(item.action.url)?@"":item.action.url;
 			NSString *invokeAction = isEmptyString_Nd(item.action.invokeAction)?@"":item.action.invokeAction;
-			
+			NSString *comments = isEmptyString_Nd(self.textView.contentText)?@"":self.textView.contentText;
 			
 			if (_delegate && [_delegate conformsToProtocol:@protocol(NPSEventDelegate)]) {
-				if (_delegate && [_delegate respondsToSelector:@selector(NPSClickEventByActionModel:isClose:buttonName:nudgeModel:score:optionList:thumbResult:)]) {
-					[_delegate NPSClickEventByActionModel:item.action isClose:isClose buttonName:text nudgeModel:_baseModel score:self.resultNumber optionList:@[].mutableCopy thumbResult:@""];
+				if (_delegate && [_delegate respondsToSelector:@selector(NPSClickEventByActionModel:isClose:buttonName:nudgeModel:score:optionList:thumbResult:comments:feedbackDuration:)]) {
+					
+					// 反馈时长
+					NSString *feedBackTime = [NSString getCurrentTimestamp];
+					NSInteger feedbackDuration = [feedBackTime integerValue] - [showTimestamp integerValue];
+					
+					[_delegate NPSClickEventByActionModel:item.action isClose:isClose buttonName:text nudgeModel:_baseModel score:self.resultNumber optionList:@[].mutableCopy thumbResult:@"" comments:comments feedbackDuration:feedbackDuration];
 				}
 			}
 			
 			// 埋点发送通知给RN
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"0",@"jumpUrl":url,@"invokeAction":invokeAction,@"isClose":@(isClose),@"buttonName":text,@"source":@"1",@"pageName":pageName,@"score":@(self.resultNumber),@"optionList":@[].mutableCopy,@"thumbResult":@""}}];
-		}
-	}
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeClick",@"body":@{@"nudgesId":@(_baseModel.nudgesId),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(_baseModel.campaignId),@"batchId":@"0",@"jumpUrl":url,@"invokeAction":invokeAction,@"isClose":@(isClose),@"buttonName":text,@"source":@"1",@"pageName":pageName,@"score":self.resultNumber,@"comments":comments,@"optionList":@[].mutableCopy,@"thumbResult":@""}}];
+        }
+    }
 }
 
 - (void)setBaseModel:(NudgesBaseModel *)baseModel {
@@ -141,10 +150,13 @@ static HJNPSManager *manager = nil;
 
 // 移除ToolTips
 - (void)removeNudges {
-    if ([self.visiblePopTipViews count] > 0) {
-        CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
-        [popTipView dismissAnimated:YES];
-        [self.visiblePopTipViews removeObjectAtIndex:0];
+    if ([[HJNudgesManager sharedInstance].visiblePopTipViews count] > 0) {
+        UIView *popView = [[HJNudgesManager sharedInstance].visiblePopTipViews objectAtIndex:0];
+		[popView removeFromSuperview];
+		[popView.subviews enumerateObjectsUsingBlock:^(__kindof UIView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+			[obj removeFromSuperview];
+		}];
+        [[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
     }
 }
 
@@ -188,12 +200,16 @@ static HJNPSManager *manager = nil;
     }
     
     // 显示后上报接口
-    [[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:_baseModel.nudgesId contactId:_baseModel.contactId];
+//    [[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:_baseModel.nudgesId contactId:_baseModel.contactId];
   
   NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
   NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
   NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
   
+	showTimestamp = [NSString getCurrentTimestamp];
+	
+	[[HJNudgesManager sharedInstance].visiblePopTipViews addObject:self.customView];
+	
 	// 回调
 	if (_delegate && [_delegate conformsToProtocol:@protocol(NPSEventDelegate)]) {
 		if (_delegate && [_delegate respondsToSelector:@selector(NPSShowEventByNudgesModel:batchId:source:)]) {
@@ -207,8 +223,9 @@ static HJNPSManager *manager = nil;
 
 #pragma mark -- SliderViewEventDelegate
 - (void)SliderViewEventClickByResult:(NSInteger)reslut target:(id)target {
-    self.resultNumber = reslut; // 缓存结果
-    NSLog(@"%ld",(long)self.resultNumber);
+	self.resultNumber = [NSString stringWithFormat:@"%ld",(long)reslut];
+   // self.resultNumber = reslut; // 缓存结果
+//    NSLog(@"%ld",(long)self.resultNumber);
 }
 
 #pragma mark -- 构造nudges数据
@@ -234,41 +251,41 @@ static HJNPSManager *manager = nil;
     
     
     // 根据返回的findIndex判断是否nudges target
-    __block UIView *view = nil;
-    if (!isEmptyString_Nd(baseModel.findIndex)) {
-        // 获取window 的nodel
-//        UIViewController *VC = [self getCurrentVC];
-        UIViewController *VC = [TKUtils topViewController];
-        NodeModel *nodel = [[NdHJIntroductManager sharedManager] getWindowNode:[UIApplication sharedApplication].delegate.window inViewController:VC index:@""];
-        
-        __block BOOL isExist = NO;
-        NSLog(@"baseModel.appExtInfoModel.accessibilityIdentifier:%@",baseModel.appExtInfoModel.accessibilityIdentifier);
-        
-        NSString *identifier = baseModel.appExtInfoModel.accessibilityIdentifier;
-        NSString *stringWithoutSpace = [identifier stringByReplacingOccurrencesOfString:@" " withString:@""];
-        stringWithoutSpace = [stringWithoutSpace stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-        stringWithoutSpace = [stringWithoutSpace stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        
-        [self getViewNodeModelByAccessibilityElement:stringWithoutSpace targetView:nodel block:^(NodeModel *nodel) {
-            NSLog(@"halllo------%@",nodel.strAccessibilityIdentifier);
-            view = nodel.targetView;
-            // 判断当前view是否在屏幕中
-            isExist = [TKUtils isDisplayedInScreen:view];
-            if (isExist) {
-                // 在当前屏幕范围中
-            } else {
-                // 不在当前屏幕中 跳过展示下一个nudges
-                [[HJNudgesManager sharedInstance] showNextNudges];
-                return;
-            }
-        }];
-        
-        if (!view || !isExist) {
-            return;
-        }
-    }
+//    __block UIView *view = nil;
+//    if (!isEmptyString_Nd(baseModel.findIndex)) {
+//        // 获取window 的nodel
+////        UIViewController *VC = [self getCurrentVC];
+//        UIViewController *VC = [TKUtils topViewController];
+//        NodeModel *nodel = [[NdHJIntroductManager sharedManager] getWindowNode:[UIApplication sharedApplication].delegate.window inViewController:VC index:@""];
+//        
+//        __block BOOL isExist = NO;
+//        NSLog(@"baseModel.appExtInfoModel.accessibilityIdentifier:%@",baseModel.appExtInfoModel.accessibilityIdentifier);
+//        
+//        NSString *identifier = baseModel.appExtInfoModel.accessibilityIdentifier;
+//        NSString *stringWithoutSpace = [identifier stringByReplacingOccurrencesOfString:@" " withString:@""];
+//        stringWithoutSpace = [stringWithoutSpace stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+//        stringWithoutSpace = [stringWithoutSpace stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+//        
+//        [self getViewNodeModelByAccessibilityElement:stringWithoutSpace targetView:nodel block:^(NodeModel *nodel) {
+//            NSLog(@"halllo------%@",nodel.strAccessibilityIdentifier);
+//            view = nodel.targetView;
+//            // 判断当前view是否在屏幕中
+//            isExist = [TKUtils isDisplayedInScreen:view];
+//            if (isExist) {
+//                // 在当前屏幕范围中
+//            } else {
+//                // 不在当前屏幕中 跳过展示下一个nudges
+//                [[HJNudgesManager sharedInstance] showNextNudges];
+//                return;
+//            }
+//        }];
+//        
+//        if (!view || !isExist) {
+//            return;
+//        }
+//    }
     
-   
+	self.resultNumber = @"";
     
     // 展示时间判断
     NSString *dateNow = [TKUtils getFullDateStringWithDate:[NSDate date]];
@@ -444,7 +461,7 @@ static HJNPSManager *manager = nil;
     UILabel *bodyLab = [[UILabel alloc] init];
     UIView *npsView = [[UIView alloc] init];
     WKTextView *textView = [[WKTextView alloc] init];
-    
+	self.textView = textView;
     if (baseModel.ownPropModel.enabled) { // 增加可输入区域
         // NPS Start
     #define H_numberView  20   // 刻度的高度 or 点击的刻度的高度
@@ -1011,35 +1028,36 @@ static HJNPSManager *manager = nil;
     [self removeNudges]; // 移除nudges
     [self removeMonolayer]; // 移除蒙层
     [self stopTimer]; // 停止定时器
-    [self.popTipView removeFromSuperview];
-    self.popTipView = nil;
+//    [self.popTipView removeFromSuperview];
+//    self.popTipView = nil;
+	
     [[HJNudgesManager sharedInstance] showNextNudges]; // 展示下一个Nudges
 }
 
 #pragma mark - CMPopTipViewDelegate methods
 // 点击Nudges的代理
-- (void)popTipViewWasDismissedByUser:(CMPopTipView *)popTipView {
-//    [self.visiblePopTipViews removeObject:popTipView];
-}
+//- (void)popTipViewWasDismissedByUser:(CMPopTipView *)popTipView {
+////    [self.visiblePopTipViews removeObject:popTipView];
+//}
 
 #pragma mark - UIViewController methods
-- (void)willAnimateRotationToInterfaceOrientation:(__unused UIInterfaceOrientation)toInterfaceOrientation duration:(__unused NSTimeInterval)duration {
-    for (CMPopTipView *popTipView in self.visiblePopTipViews) {
-        id targetObject = popTipView.targetObject;
-        [popTipView dismissAnimated:NO];
-
-        if ([targetObject isKindOfClass:[UIButton class]]) {
-            UIButton *button = (UIButton *)targetObject;
-            [popTipView presentPointingAtView:button inView:[UIApplication sharedApplication].delegate.window animated:NO];
-        } else if ([targetObject isKindOfClass:[UIView class]]) {
-            UIView *view = (UIView *)targetObject;
-            [popTipView presentPointingAtView:view inView:[UIApplication sharedApplication].delegate.window animated:YES];
-        } else {
-            UIBarButtonItem *barButtonItem = (UIBarButtonItem *)targetObject;
-            [popTipView presentPointingAtBarButtonItem:barButtonItem animated:NO];
-        }
-    }
-}
+//- (void)willAnimateRotationToInterfaceOrientation:(__unused UIInterfaceOrientation)toInterfaceOrientation duration:(__unused NSTimeInterval)duration {
+//    for (CMPopTipView *popTipView in [HJNudgesManager sharedInstance].visiblePopTipViews) {
+//        id targetObject = popTipView.targetObject;
+//        [popTipView dismissAnimated:NO];
+//
+//        if ([targetObject isKindOfClass:[UIButton class]]) {
+//            UIButton *button = (UIButton *)targetObject;
+//            [popTipView presentPointingAtView:button inView:[UIApplication sharedApplication].delegate.window animated:NO];
+//        } else if ([targetObject isKindOfClass:[UIView class]]) {
+//            UIView *view = (UIView *)targetObject;
+//            [popTipView presentPointingAtView:view inView:[UIApplication sharedApplication].delegate.window animated:YES];
+//        } else {
+//            UIBarButtonItem *barButtonItem = (UIBarButtonItem *)targetObject;
+//            [popTipView presentPointingAtBarButtonItem:barButtonItem animated:NO];
+//        }
+//    }
+//}
 
 //画虚线
 - (void)drawDashLine:(UIView *)lineView viewFrame:(CGRect)viewBounds viewHeight:(CGFloat)viewHeight viewWidth:(CGFloat)viewWidth lineLength:(int)lineLength lineSpacing:(int)lineSpacing lineColor:(UIColor *)lineColor{

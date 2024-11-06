@@ -298,7 +298,7 @@ static HJFloatingAtionManager *manager = nil;
         }
         
         // 显示后上报接口
-        [[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
+//        [[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
       
       
       NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;

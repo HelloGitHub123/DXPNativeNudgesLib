@@ -13,7 +13,7 @@
 @protocol RateEventDelegate <NSObject>
 
 /// eg: 按钮点击事件
-- (void)RateClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName score:(CGFloat)score thumbResult:(NSString *)thumbResult nudgeModel:(NudgesBaseModel *)model;
+- (void)RateClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName score:(NSString *)score thumbResult:(NSString *)thumbResult comments:(NSString *)comments nudgeModel:(NudgesBaseModel *)model feedbackDuration:(NSInteger)feedbackDuration;
 
 // nudges显示出来后回调代理
 - (void)RateShowEventByNudgesModel:(NudgesBaseModel *)model batchId:(NSString *)batchId source:(NSString *)source;

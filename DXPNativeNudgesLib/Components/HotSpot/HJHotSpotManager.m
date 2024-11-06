@@ -31,7 +31,7 @@ static HJHotSpotManager *manager = nil;
 @interface HJHotSpotManager ()<CMPopTipViewDelegate, MonolayerViewDelegate> {
     
 }
-@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
+//@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
 @property (nonatomic, strong) dispatch_source_t timer;
 
 @property (nonatomic, strong) ZFPlayerController *player;
@@ -54,7 +54,7 @@ static HJHotSpotManager *manager = nil;
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.visiblePopTipViews = [[NSMutableArray alloc] init];
+//        self.visiblePopTipViews = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -145,10 +145,10 @@ static HJHotSpotManager *manager = nil;
 
 // 移除ToolTips
 - (void)removeNudges {
-    if ([self.visiblePopTipViews count] > 0) {
-        CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
+    if ([[HJNudgesManager sharedInstance].visiblePopTipViews count] > 0) {
+        CMPopTipView *popTipView = [[HJNudgesManager sharedInstance].visiblePopTipViews objectAtIndex:0];
         [popTipView dismissAnimated:YES];
-        [self.visiblePopTipViews removeObjectAtIndex:0];
+        [[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
         [self stopCurrentPlayingView];
     }
 }
@@ -311,7 +311,7 @@ static HJHotSpotManager *manager = nil;
         self.popTipView = popTipView;
         // 弹出Nudges
         [popTipView presentPointingAtView:tConView inView:[UIApplication sharedApplication].delegate.window animated:YES];
-        [self.visiblePopTipViews addObject:popTipView];
+        [[HJNudgesManager sharedInstance].visiblePopTipViews addObject:popTipView];
         
         return;
     }
@@ -883,25 +883,28 @@ static HJHotSpotManager *manager = nil;
     
     [[TKUtils topViewController].tabBarController.view bringSubviewToFront:view];
     [popTipView presentPointingAtView:view inView:[TKUtils topViewController].view animated:NO];
-    
-	NSString *contactId = isEmptyString_Nd(_baseModel.contactId)?@"":_baseModel.contactId;
-	NSString *nudgesName = isEmptyString_Nd(_baseModel.nudgesName)?@"":_baseModel.nudgesName;
-	NSString *pageName = isEmptyString_Nd(_baseModel.pageName)?@"":_baseModel.pageName;
-	  
-	  // 显示回调
-	  if (_delegate && [_delegate conformsToProtocol:@protocol(HotSpotEventDelegate)]) {
-		  if (_delegate && [_delegate respondsToSelector:@selector(HotSpotShowEventByNudgesModel:batchId:source:)]) {
-			  [_delegate HotSpotShowEventByNudgesModel:baseModel batchId:@"0" source:@"1"];
-		  }
-	  }
-	  
-	  // 埋点发送通知给RN
-	  [[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(baseModel.nudgesId),@"nudgesType":@(baseModel.nudgesType),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(baseModel.campaignId),@"batchId":@"0",@"source":@"1",@"pageName":pageName}}];
 	
+	
+	// 显示回调
+	if (_delegate && [_delegate conformsToProtocol:@protocol(HotSpotEventDelegate)]) {
+		if (_delegate && [_delegate respondsToSelector:@selector(HotSpotShowEventByNudgesModel:batchId:source:)]) {
+			[_delegate HotSpotShowEventByNudgesModel:baseModel batchId:@"0" source:@"1"];
+		}
+	}
+	
+	NSString *contactId = isEmptyString_Nd(baseModel.contactId)?@"":baseModel.contactId;
+	NSString *nudgesName = isEmptyString_Nd(baseModel.nudgesName)?@"":baseModel.nudgesName;
+	NSString *pageName = isEmptyString_Nd(baseModel.pageName)?@"":baseModel.pageName;
+	// 埋点发送通知给RN
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(baseModel.nudgesId),@"nudgesType":@(baseModel.nudgesType),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(baseModel.campaignId),@"batchId":@"0",@"source":@"1",@"pageName":pageName}}];
+	
+    
     // 显示后上报接口
-    [[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
+//    [[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
   
-    [self.visiblePopTipViews addObject:popTipView];
+ 
+  
+    [[HJNudgesManager sharedInstance].visiblePopTipViews addObject:popTipView];
     
     // dismissButton A,B,C
     if ([baseModel.dismiss containsString:@"C"] || isEmptyString_Nd(baseModel.dismiss)) {
@@ -962,7 +965,7 @@ static HJHotSpotManager *manager = nil;
 
 #pragma mark - UIViewController methods
 - (void)willAnimateRotationToInterfaceOrientation:(__unused UIInterfaceOrientation)toInterfaceOrientation duration:(__unused NSTimeInterval)duration {
-    for (CMPopTipView *popTipView in self.visiblePopTipViews) {
+    for (CMPopTipView *popTipView in [HJNudgesManager sharedInstance].visiblePopTipViews) {
         id targetObject = popTipView.targetObject;
         [popTipView dismissAnimated:NO];
 

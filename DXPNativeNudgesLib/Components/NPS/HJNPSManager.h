@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol NPSEventDelegate <NSObject>
 
 /// eg:按钮点击事件 score: 评分  thumbResult 点赞点踩
-- (void)NPSClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model score:(NSInteger)score optionList:(NSMutableArray *)optionList thumbResult:(NSString *)thumbResult;
+- (void)NPSClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model score:(NSString *)score optionList:(NSMutableArray *)optionList thumbResult:(NSString *)thumbResult comments:(NSString *)comments feedbackDuration:(NSInteger)feedbackDuration;
+
 
 /// eg:提交评分
 - (void)NPSSubmitByScore:(NSInteger)score;

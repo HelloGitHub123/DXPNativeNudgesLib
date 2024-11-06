@@ -46,6 +46,8 @@ static HJNudgesManager *manager = nil;
 
 @property (nonatomic, strong) NudgesModel *currentModel; //
 @property (nonatomic, strong) NudgesBaseModel *currentBaseModel; //
+// 反馈时长
+@property (nonatomic, assign) NSInteger feedbackDuration;
 
 /// 频次model
 @property (nonatomic, strong) FrequencyModel *frequencyModel;
@@ -84,6 +86,9 @@ static HJNudgesManager *manager = nil;
 	self.isLock = NO;
 	self.nIndex = 0;
 	self.isReported = NO; // 默认不上报
+	
+	self.visiblePopTipViews = [[NSMutableArray alloc] init];
+	
 }
 
 // 判断App是否首次加载Nudges
@@ -335,9 +340,9 @@ static HJNudgesManager *manager = nil;
 					//          if ([[pageName lowercaseString] containsString:@"viewcontroller"]) {
 					//            [self.nudgesShowList addObject:dic];
 					//          }
-					if (!isEmptyString_Nd(pageName) && [pageName isEqualToString:self.currentPageName]) {
+//					if (!isEmptyString_Nd(pageName) &&[pageName isEqualToString:self.currentPageName]) {
 						[self.nudgesShowList addObject:dic];
-					}
+//					}
 				}
 				if (IsArrEmpty_Nd(self.nudgesShowList)) {
 					return;
@@ -359,9 +364,7 @@ static HJNudgesManager *manager = nil;
 					}
 				}
 				
-				if (!isEmptyString_Nd(self.currentPageName)) {
-					[[HJNudgesManager sharedInstance] queryNudgesWithPageName:self.currentPageName];
-				}
+//				[[HJNudgesManager sharedInstance] queryNudgesWithPageName:self.currentPageName];
 			}
 		}
 	}];
@@ -498,6 +501,10 @@ static HJNudgesManager *manager = nil;
 
 #pragma mark -- 调试预览nudges (Preview)
 - (void)showPreviewNudges:(NSDictionary *)dic {
+	if (self.visiblePopTipViews.count > 0) {
+		return;
+	}
+	
 	// 清空数据库数据
 	[NdHJNudgesDBManager deleteTableAllDataForNudges];
 	// 查找对应预览的nudges
@@ -510,7 +517,7 @@ static HJNudgesManager *manager = nil;
 	NudgesBaseModel *baseModel = [[NudgesBaseModel alloc] initWithMsgModel:model];
 	self.currentBaseModel = baseModel;
 	
-	if (baseModel.nudgesType == KNudgesType_NPS || baseModel.nudgesType == KNudgesType_Forms || baseModel.nudgesType == KNudgesType_Rate || baseModel.nudgesType == KNudgesType_FunnelReminders) {
+	if (baseModel.nudgesType == KNudgesType_NPS || baseModel.nudgesType == KNudgesType_Forms || baseModel.nudgesType == KNudgesType_Rate || baseModel.nudgesType == KNudgesType_FunnelReminders || baseModel.nudgesType == KNudgesType_FloatingActions || baseModel.nudgesType == KNudgesType_Rate) {
 		[self previewConstructsNudgesViewByFindView:nil isFindType:KNudgeFineType_Exist_Find];
 	} else {
 		// 检查是否存在当前页面
@@ -555,6 +562,20 @@ static HJNudgesManager *manager = nil;
 		return;
 	}
 	
+	if (self.currentModel.nudgesType == KNudgesType_FloatingActions) {
+		[HJFloatingAtionManager sharedInstance].nudgesModel = self.currentModel;
+		[HJFloatingAtionManager sharedInstance].baseModel = self.currentBaseModel;
+		[HJFloatingAtionManager sharedInstance].delegate = self;
+		return;
+	}
+	
+	if (self.currentModel.nudgesType == KNudgesType_Rate) {
+		[HJRateManager sharedInstance].nudgesModel = self.currentModel;
+		[HJRateManager sharedInstance].baseModel = self.currentBaseModel;
+		[HJRateManager sharedInstance].delegate = self;
+		return;
+	}
+	
 	if (type == KNudgeFineType_Exist_Find) {
 		// 类型匹配进行，显示
 		switch (self.currentModel.nudgesType) {
@@ -585,18 +606,6 @@ static HJNudgesManager *manager = nil;
 				[[HJPomoTagManager sharedInstance] startConstructsNudgesView];
 			}
 				break;
-			case KNudgesType_FloatingActions: {
-				[HJFloatingAtionManager sharedInstance].nudgesModel = self.currentModel;
-				[HJFloatingAtionManager sharedInstance].baseModel = self.currentBaseModel;
-				[HJFloatingAtionManager sharedInstance].delegate = self;
-			}
-				break;
-			case KNudgesType_Rate: {
-				[HJRateManager sharedInstance].nudgesModel = self.currentModel;
-				[HJRateManager sharedInstance].baseModel = self.currentBaseModel;
-				[HJRateManager sharedInstance].delegate = self;
-			}
-				break;
 			case KNudgesType_Tooltips: {
 				[HJToolTipsManager sharedInstance].nudgesModel = self.currentModel;
 				[HJToolTipsManager sharedInstance].baseModel = self.currentBaseModel;
@@ -617,6 +626,15 @@ static HJNudgesManager *manager = nil;
 				break;
 		}
 	}
+}
+
+- (void)setCurrentPageName:(NSString *)currentPageName {
+	_currentPageName = currentPageName;
+	
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		[self queryNudgesWithPageName:currentPageName];
+	});
+
 }
 
 
@@ -681,7 +699,7 @@ static HJNudgesManager *manager = nil;
 	
 	NudgesModel *nudgeModel = [self.showList objectAtIndex:self.nIndex];
 	self.currentModel = nudgeModel;
-	if (self.currentModel.nudgesType == KNudgesType_NPS || self.currentModel.nudgesType == KNudgesType_Forms) {
+	if (self.currentModel.nudgesType == KNudgesType_NPS || self.currentModel.nudgesType == KNudgesType_Forms || self.currentModel.nudgesType == KNudgesType_Rate || self.currentModel.nudgesType == KNudgesType_FunnelReminders || self.currentModel.nudgesType == KNudgesType_FloatingActions || self.currentModel.nudgesType == KNudgesType_Rate) {
 		[[HJNudgesManager sharedInstance] startConstructsNudgesViewByFindView:nil isFindType:KNudgeFineType_Exist_Find];
 	} else {
 		// 检查是否存在当前页面
@@ -1225,14 +1243,18 @@ static HJNudgesManager *manager = nil;
 }
 
 #pragma mark -- NPSEventDelegate
-- (void)NPSClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model score:(NSInteger)score optionList:(NSMutableArray *)optionList thumbResult:(NSString *)thumbResult {
+/// eg:按钮点击事件 score: 评分  thumbResult 点赞点踩
+- (void)NPSClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model score:(NSString *)score optionList:(NSMutableArray *)optionList thumbResult:(NSString *)thumbResult comments:(nonnull NSString *)comments feedbackDuration:(NSInteger)feedbackDuration {
+	
+	// 记录反馈时长
+	self.feedbackDuration = feedbackDuration;
 	
 	if (self.buttonClickEventBlock) {
 		self.buttonClickEventBlock(actionModel, isClose, buttonName,@"", model);
 	}
 	
 	if (self.feedBackEventBlock) {
-		self.feedBackEventBlock(model, @"0", @"1", score, optionList, thumbResult);
+		self.feedBackEventBlock(model, @"0", @"1", score, optionList, thumbResult, comments);
 	}
 }
 
@@ -1252,14 +1274,16 @@ static HJNudgesManager *manager = nil;
 }
 
 #pragma mark -- FeedBackEventDelegate
-- (void)FeedBackClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName selectedOptionList:(NSMutableArray *)selectedOptionList FeedBackText:(NSString *)FeedBackText nudgeModel:(NudgesBaseModel *)model {
+- (void)FeedBackClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName optionList:(NSMutableArray *)optionList FeedBackText:(NSString *)FeedBackText nudgeModel:(NudgesBaseModel *)model comments:(nonnull NSString *)comments feedbackDuration:(NSInteger)feedbackDuration {
+	// 记录反馈时长
+	self.feedbackDuration = feedbackDuration;
 	
 	if (self.buttonClickEventBlock) {
 		self.buttonClickEventBlock(actionModel, isClose, buttonName, FeedBackText, model);
 	}
 	
 	if (self.feedBackEventBlock) {
-		self.feedBackEventBlock(model, @"0", @"1", 0, selectedOptionList, @"");
+		self.feedBackEventBlock(model, @"0", @"1", @"", optionList, @"", comments);
 	}
 }
 
@@ -1271,14 +1295,17 @@ static HJNudgesManager *manager = nil;
 }
 
 #pragma mark -- RateEventDelegate
-- (void)RateClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName score:(CGFloat)score thumbResult:(NSString *)thumbResult nudgeModel:(NudgesBaseModel *)model {
+- (void)RateClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName score:(NSString *)score thumbResult:(NSString *)thumbResult comments:(NSString *)comments nudgeModel:(NudgesBaseModel *)model feedbackDuration:(NSInteger)feedbackDuration {
+	
+	// 记录反馈时长
+	self.feedbackDuration = feedbackDuration;
 	
 	if (self.buttonClickEventBlock) {
 		self.buttonClickEventBlock(actionModel, isClose, buttonName, @"",model);
 	}
 	
 	if (self.feedBackEventBlock) {
-		self.feedBackEventBlock(model, @"0", @"1", score, @[].mutableCopy, thumbResult);
+		self.feedBackEventBlock(model, @"0", @"1", score, @[].mutableCopy, thumbResult, comments);
 	}
 }
 
@@ -1299,13 +1326,13 @@ static HJNudgesManager *manager = nil;
 }
 
 #pragma mark -- AnnouncementEventDelegate
-- (void)AnnouncementSubmitByScore:(NSInteger)score {
+//- (void)AnnouncementSubmitByScore:(NSInteger)score {
 	//  if (_delegate && [_delegate conformsToProtocol:@protocol(NudgesEventDelegate)]) {
 	//    if (_delegate && [_delegate respondsToSelector:@selector(NudgesSubmitByScore:thumns:)]) {
 	//      [_delegate NudgesSubmitByScore:score thumns:0];
 	//    }
 	//  }
-}
+//}
 
 - (void)AnnouncementClickEventByActionModel:(ActionModel *)actionModel isClose:(BOOL)isClose buttonName:(NSString *)buttonName nudgeModel:(NudgesBaseModel *)model {
 	if (self.buttonClickEventBlock) {
@@ -1348,7 +1375,7 @@ static HJNudgesManager *manager = nil;
 		@"thumbResult":thumbResult,
 		@"options":options,
 		@"comments":comments,
-		@"feedbackDuration":feedbackDuration
+		@"feedbackDuration":@(self.feedbackDuration)
 	};
 	[[NdHJHttpSessionManager sharedInstance] sendRequest:request complete:^(NdHJHttpReponse * _Nonnull response) {
 		if (!response.serverError) {

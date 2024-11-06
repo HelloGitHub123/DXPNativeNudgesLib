@@ -36,7 +36,7 @@ static HJToolTipsManager *manager = nil;
 @interface HJToolTipsManager ()<CMPopTipViewDelegate, MonolayerViewDelegate> {
 }
 
-@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
+//@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
 @property (nonatomic, strong) dispatch_source_t timer;
 // 播放器
 @property (nonatomic, strong) ZFPlayerController *player;
@@ -61,7 +61,7 @@ static HJToolTipsManager *manager = nil;
 - (instancetype)init {
 	self = [super init];
 	if (self) {
-		self.visiblePopTipViews = [[NSMutableArray alloc] init];
+//		self.visiblePopTipViews = [[NSMutableArray alloc] init];
 	}
 	return self;
 }
@@ -139,22 +139,23 @@ static HJToolTipsManager *manager = nil;
 
 // 移除ToolTips
 - (void)removeNudges {
-	if ([self.visiblePopTipViews count] > 0) {
-		CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
+	if ([[HJNudgesManager sharedInstance].visiblePopTipViews count] > 0) {
+		CMPopTipView *popTipView = [[HJNudgesManager sharedInstance].visiblePopTipViews objectAtIndex:0];
 		[popTipView dismissAnimated:YES];
-		[self.visiblePopTipViews removeObjectAtIndex:0];
+		[[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
 		[self stopCurrentPlayingView];
 		// 寻找下一个nudges
+		
 		[[HJNudgesManager sharedInstance] showNextNudges];
 	}
 }
 
 // 删除预览的nudges
 - (void)removePreviewNudges {
-	if ([self.visiblePopTipViews count] > 0) {
-		CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
+	if ([[HJNudgesManager sharedInstance].visiblePopTipViews count] > 0) {
+		CMPopTipView *popTipView = [[HJNudgesManager sharedInstance].visiblePopTipViews objectAtIndex:0];
 		[popTipView dismissAnimated:YES];
-		[self.visiblePopTipViews removeObjectAtIndex:0];
+		[[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
 		[self stopCurrentPlayingView];
 	}
 }
@@ -1183,12 +1184,10 @@ static HJToolTipsManager *manager = nil;
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(baseModel.nudgesId),@"nudgesType":@(baseModel.nudgesType),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(baseModel.campaignId),@"batchId":@"0",@"source":@"1",@"pageName":pageName}}];
 	
 	
-	
-	
 	// 显示后上报接口
-	[[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
+//	[[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
 	
-	[self.visiblePopTipViews addObject:popTipView];
+	[[HJNudgesManager sharedInstance].visiblePopTipViews addObject:popTipView];
 	
 	// dismissButton A,B,C
 	if ([baseModel.dismiss containsString:@"C"] || isEmptyString_Nd(baseModel.dismiss)) {
@@ -1250,7 +1249,7 @@ static HJToolTipsManager *manager = nil;
 
 #pragma mark - UIViewController methods
 - (void)willAnimateRotationToInterfaceOrientation:(__unused UIInterfaceOrientation)toInterfaceOrientation duration:(__unused NSTimeInterval)duration {
-	for (CMPopTipView *popTipView in self.visiblePopTipViews) {
+	for (CMPopTipView *popTipView in [HJNudgesManager sharedInstance].visiblePopTipViews) {
 		id targetObject = popTipView.targetObject;
 		[popTipView dismissAnimated:NO];
 		

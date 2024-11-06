@@ -6,13 +6,14 @@
 //  Nudges 管理大单例
 
 #import <Foundation/Foundation.h>
-//#import "NudgesBaseModel.h"
+
 //#import "NudgesModel.h"
 #import "MonolayerModel.h"
 #import "NudgesConfigParametersModel.h"
 #import "ActionModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
 
 @class NudgesBaseModel;
 @interface HJNudgesManager : NSObject
@@ -34,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 // 屏幕截图
 @property (nonatomic, strong) UIImage *screenShotImg;
 
+@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
 /**
  * 按钮点击事件
  *  eventName: 事件名称
@@ -63,7 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
  *  thumbResult  点赞点踩
  *
  */
-@property (nonatomic, copy) void (^feedBackEventBlock)(NudgesBaseModel *model, NSString *batchId, NSString *source, CGFloat score, NSMutableArray *optionList, NSString *thumbResult);
+@property (nonatomic, copy) void (^feedBackEventBlock)(NudgesBaseModel *model, NSString *batchId, NSString *source, NSString *score, NSMutableArray *optionList, NSString *thumbResult, NSString *comments);
 
 
 + (instancetype)sharedInstance;

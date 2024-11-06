@@ -31,7 +31,7 @@ static HJPomoTagManager *manager = nil;
 @interface HJPomoTagManager ()<CMPopTipViewDelegate, MonolayerViewDelegate> {
     
 }
-@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
+//@property (nonatomic, strong) NSMutableArray *visiblePopTipViews;
 @property (nonatomic, strong) dispatch_source_t timer;
 @property (nonatomic, strong) CMPopTipView *popTipView;
 @end
@@ -49,7 +49,7 @@ static HJPomoTagManager *manager = nil;
 - (instancetype)init {
 	self = [super init];
 	if (self) {
-		self.visiblePopTipViews = [[NSMutableArray alloc] init];
+//		self.visiblePopTipViews = [[NSMutableArray alloc] init];
 	}
 	return self;
 }
@@ -87,10 +87,10 @@ static HJPomoTagManager *manager = nil;
 
 // 移除ToolTips
 - (void)removeNudges {
-	if ([self.visiblePopTipViews count] > 0) {
-		CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
+	if ([[HJNudgesManager sharedInstance].visiblePopTipViews count] > 0) {
+		CMPopTipView *popTipView = [[HJNudgesManager sharedInstance].visiblePopTipViews objectAtIndex:0];
 		[popTipView dismissAnimated:YES];
-		[self.visiblePopTipViews removeObjectAtIndex:0];
+		[[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
 		// 寻找下一个nudges
 		[[HJNudgesManager sharedInstance] showNextNudges];
 	}
@@ -98,10 +98,10 @@ static HJPomoTagManager *manager = nil;
 
 // 删除预览的nudges
 - (void)removePreviewNudges {
-  if ([self.visiblePopTipViews count] > 0) {
-    CMPopTipView *popTipView = [self.visiblePopTipViews objectAtIndex:0];
+  if ([[HJNudgesManager sharedInstance].visiblePopTipViews count] > 0) {
+    CMPopTipView *popTipView = [[HJNudgesManager sharedInstance].visiblePopTipViews objectAtIndex:0];
     [popTipView dismissAnimated:YES];
-    [self.visiblePopTipViews removeObjectAtIndex:0];
+    [[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
   }
 }
 
@@ -350,7 +350,7 @@ static HJPomoTagManager *manager = nil;
 //	[[SensorsManagement sharedInstance]trackWithName:@"NudgesShow" withProperties:dic];
 	
 	// 显示后上报接口
-	[[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
+//	[[HJNudgesManager sharedInstance] nudgesContactRespByNudgesId:baseModel.nudgesId contactId:baseModel.contactId];
   
   
 	// 显示回调
@@ -364,7 +364,7 @@ static HJPomoTagManager *manager = nil;
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"start_event_notification" object:nil userInfo:@{@"eventName":@"NudgeShow",@"body":@{@"nudgesId":@(baseModel.nudgesId),@"nudgesType":@(baseModel.nudgesType),@"nudgesName":nudgesName,@"contactId":contactId,@"campaignCode":@(baseModel.campaignId),@"batchId":@"0",@"source":@"1",@"pageName":pageName}}];
 
 	
-	[self.visiblePopTipViews addObject:popTipView];
+	[[HJNudgesManager sharedInstance].visiblePopTipViews addObject:popTipView];
 	
 	// dismissButton A,B,C
 	if ([baseModel.dismiss containsString:@"C"] || isEmptyString_Nd(baseModel.dismiss)) {
@@ -418,7 +418,7 @@ static HJPomoTagManager *manager = nil;
 
 #pragma mark - UIViewController methods
 - (void)willAnimateRotationToInterfaceOrientation:(__unused UIInterfaceOrientation)toInterfaceOrientation duration:(__unused NSTimeInterval)duration {
-	for (CMPopTipView *popTipView in self.visiblePopTipViews) {
+	for (CMPopTipView *popTipView in [HJNudgesManager sharedInstance].visiblePopTipViews) {
 		id targetObject = popTipView.targetObject;
 		[popTipView dismissAnimated:NO];
 
