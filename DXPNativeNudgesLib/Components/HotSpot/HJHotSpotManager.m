@@ -139,7 +139,7 @@ static HJHotSpotManager *manager = nil;
 
 // dissMiss 按钮点击事件
 - (void)dissMissButtonClick:(id)sender {
-    NSLog(@"dissMissButtonClick");
+    NSLog(@"DXPNugges Log:=== dissMissButtonClick");
     [self MonolayerViewClickEventByTarget:self];
 }
 
@@ -155,7 +155,14 @@ static HJHotSpotManager *manager = nil;
 
 // 删除预览的nudges
 - (void)removePreviewNudges {
-  [self removeNudges];
+	// 关闭Nudges
+	[self removeBeaConView];
+	[self stopCurrentPlayingView]; // 停止播放器
+	[self removeNudges];
+	[self removeMonolayer];
+	[self stopTimer];
+	[self.popTipView removeFromSuperview];
+	self.popTipView = nil;
 }
 
 // 停止播放，并且移除播放器
@@ -244,20 +251,11 @@ static HJHotSpotManager *manager = nil;
             make.top.equalTo(self.beaConView.mas_top).offset(5);
         }];
     }
-    // 构造给 nudges 指向的位置
-    UIView *tConView = view;
-//    CGRect frame = tConView.frame;
-    CGRect frame = CGRectZero;
-    frame.origin.y = view.origin.y + view.size.height;
-//    frame.origin.x = ( rect.size.width / 2 ); //rect.origin.x ;
-    frame.origin.x = view.origin.x +  view.size.width / 2 -15 ;
-    frame.size.width = 30;
-    frame.size.height = 30;
-    tConView.frame = frame;
+
     
     // 遮罩 + 镂空
     self.monolayerView = [[MonolayerView alloc] init];
-    self.monolayerView.monolayerViewType = KMonolayerViewType_full; // 遮罩 + 镂空
+    self.monolayerView.monolayerViewType = KMonolayerViewType_Spotlight; // 遮罩 + 镂空
     self.monolayerView.delegate = self;
     // 设置属性
     NSInteger type = baseModel.ownPropModel.type;
@@ -266,34 +264,50 @@ static HJHotSpotManager *manager = nil;
         // 圆形
         radius = view.frame.size.height / 2;
     }
-    [self.monolayerView setAlphaRectParametersByRect:[self getAddress:view] SpotlightType:type radius:radius];
+    [self.monolayerView setAlphaRectParametersByRect:[self getAddress:view] SpotlightType:KOwnPropType_Box radius:radius];
+	
+	
+	// 构造给 nudges 指向的位置
+	UIView *tConView = view;
+//    CGRect frame = tConView.frame;
+	CGRect frame = CGRectZero;
+	frame.origin.y = view.origin.y + view.size.height;
+//    frame.origin.x = ( rect.size.width / 2 ); //rect.origin.x ;
+	frame.origin.x = view.origin.x +  view.size.width / 2 -15 ;
+	frame.size.width = 30;
+	frame.size.height = 30;
+	tConView.frame = frame;
+	
     // 展示蒙层
-    if (baseModel.backdropModel.enabled) {
-        if (baseModel.backdropModel.type == KBackgroundType_Image) {
-            // 图片
-        } else if (baseModel.backdropModel.type == KBackgroundType_Gradient) {
-            // 渐变
-            NSString *gradientStartColor = baseModel.backdropModel.gradientStartColor;
-            NSString *gradientEndColor = baseModel.backdropModel.gradientEndColor;
-            if (isEmptyString_Nd(gradientStartColor) || isEmptyString_Nd(gradientEndColor)) {
-                return;
-            }
-            [self.monolayerView addGradualLayerWithColors:@[(__bridge id)[UIColor colorWithHexString:gradientStartColor].CGColor,(__bridge id)[UIColor colorWithHexString:gradientEndColor].CGColor] startPoint:CGPointMake(0, 0.5) endPoint:CGPointMake(1, 0.5)];
-        } else {
-            // 实色
-            CGFloat alpha = 0.3;
-            if (baseModel.backdropModel.opacity > 0) {
-                alpha = baseModel.backdropModel.opacity / 100.0;
-            }
-            self.monolayerView.backgroundAlpha = alpha;
-            
-            if (isEmptyString_Nd(baseModel.backdropModel.backgroundColor)) {
-                self.monolayerView.bgroundColor = @"0x000000";
-            } else {
-                self.monolayerView.bgroundColor = baseModel.backdropModel.backgroundColor;
-            }
-        }
-    }
+	if (!baseModel.backdropModel.enabled) {
+		self.monolayerView.backgroundAlpha = 0;
+		self.monolayerView.bgroundColor = @"0x000000";
+	} else {
+		if (baseModel.backdropModel.type == KBackgroundType_Image) {
+			// 图片
+		} else if (baseModel.backdropModel.type == KBackgroundType_Gradient) {
+			// 渐变
+			NSString *gradientStartColor = baseModel.backdropModel.gradientStartColor;
+			NSString *gradientEndColor = baseModel.backdropModel.gradientEndColor;
+			if (isEmptyString_Nd(gradientStartColor) || isEmptyString_Nd(gradientEndColor)) {
+				return;
+			}
+			[self.monolayerView addGradualLayerWithColors:@[(__bridge id)[UIColor colorWithHexString:gradientStartColor].CGColor,(__bridge id)[UIColor colorWithHexString:gradientEndColor].CGColor] startPoint:CGPointMake(0, 0.5) endPoint:CGPointMake(1, 0.5)];
+		} else {
+			// 实色
+			CGFloat alpha = 0.3;
+			if (baseModel.backdropModel.opacity > 0) {
+				alpha = baseModel.backdropModel.opacity / 100.0;
+			}
+			self.monolayerView.backgroundAlpha = alpha;
+			
+			if (isEmptyString_Nd(baseModel.backdropModel.backgroundColor)) {
+				self.monolayerView.bgroundColor = @"0x000000";
+			} else {
+				self.monolayerView.bgroundColor = baseModel.backdropModel.backgroundColor;
+			}
+		}
+	}
 
 //    [kAppDelegate.window addSubview:self.monolayerView];
     [[TKUtils topViewController].view addSubview:self.monolayerView];

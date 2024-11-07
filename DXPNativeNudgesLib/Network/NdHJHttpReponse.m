@@ -45,14 +45,14 @@
             HJLog(@"========响应体打印开始:%@========",[self.httpURLResponse.URL absoluteString]);
             @try {
                 if ([dic isKindOfClass:[NSDictionary class]]) {
-                    NSLog(@"ResponseUrl======Fail===\nStatusCode:%ld\n==RequestUrl:\n%@\n==HeaderFields:\n%@\n==Error!ResponseBody:\n==ITRACING_TRACE_ID:\n%@\n%@\n",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], self.httpURLResponse.allHeaderFields,[ self.httpURLResponse.allHeaderFields objectForKey:@"ITRACING_TRACE_ID"],[[dic jsonPrettyStringEncoded] jsonStrHandle]);
+                    NSLog(@"DXPNugges Log:===   ResponseUrl======Fail===\nStatusCode:%ld\n==RequestUrl:\n%@\n==HeaderFields:\n%@\n==Error!ResponseBody:\n==ITRACING_TRACE_ID:\n%@\n%@\n",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], self.httpURLResponse.allHeaderFields,[ self.httpURLResponse.allHeaderFields objectForKey:@"ITRACING_TRACE_ID"],[[dic jsonPrettyStringEncoded] jsonStrHandle]);
                 } else {
-                    NSLog(@"ResponseUrl======Fail===StatusCode:%ld==RequestUrl:%@==HeaderFields:%@==ResponseBody:%@",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], self.httpURLResponse.allHeaderFields,dic);
+                    NSLog(@"DXPNugges Log:===   ResponseUrl======Fail===StatusCode:%ld==RequestUrl:%@==HeaderFields:%@==ResponseBody:%@",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], self.httpURLResponse.allHeaderFields,dic);
                 }
             } @catch (NSException *exception) {
             } @finally {
             }
-            HJLog(@"========响应体打印结束========");
+            HJLog(@"DXPNugges Log:===   ========响应体打印结束========");
             
             NSString *message = dic[@"message"];
             if (message.length > 0) {
@@ -84,9 +84,9 @@
         HJLog(@"========响应体打印开始:%@========",[self.httpURLResponse.URL absoluteString]);
         @try {
             if ([res isKindOfClass:[NSDictionary class]]) {
-                NSLog(@"ResponseUrl======Success\n===StatusCode:%ld\n==RequestUrl:%@==\nHeaderFields:%@==\n%@\nResponseBody:\n%@\n",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], [[self.httpURLResponse.allHeaderFields jsonPrettyStringEncoded] jsonStrHandle],[self.httpURLResponse.URL absoluteString],[[res jsonPrettyStringEncoded] jsonStrHandle]);
+                NSLog(@"DXPNugges Log:===  ResponseUrl======Success\n===StatusCode:%ld\n==RequestUrl:%@==\nHeaderFields:%@==\n%@\nResponseBody:\n%@\n",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], [[self.httpURLResponse.allHeaderFields jsonPrettyStringEncoded] jsonStrHandle],[self.httpURLResponse.URL absoluteString],[[res jsonPrettyStringEncoded] jsonStrHandle]);
             } else {
-                NSLog(@"ResponseUrl======Success===StatusCode:%ld==RequestUrl:%@==HeaderFields:%@==ResponseBody:%@",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], self.httpURLResponse.allHeaderFields,res);
+                NSLog(@"DXPNugges Log:===  ResponseUrl======Success===StatusCode:%ld==RequestUrl:%@==HeaderFields:%@==ResponseBody:%@",self.httpURLResponse.statusCode,[self.httpURLResponse.URL absoluteString], self.httpURLResponse.allHeaderFields,res);
             }
         } @catch (NSException *exception) {
         }

@@ -314,7 +314,7 @@ static BOOL FMDBMigrationScanMetadataFromPath(NSString *path, uint64_t *version,
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:FMDBMigrationFilenameRegexString options:0 error:&error];
     if (!regex) {
-        NSLog(@"[FMDBMigration] Failed constructing regex: %@", error);
+        NSLog(@"DXPNugges Log:===  [FMDBMigration] Failed constructing regex: %@", error);
         return NO;
     }
     NSString *migrationName = [path lastPathComponent];

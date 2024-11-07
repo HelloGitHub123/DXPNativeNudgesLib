@@ -144,7 +144,7 @@ static HJNPSManager *manager = nil;
 
 // dissMiss 按钮点击事件
 - (void)dissMissButtonClick:(id)sender {
-    NSLog(@"dissMissButtonClick");
+    NSLog(@"DXPNugges Log:=== dissMissButtonClick");
     [self MonolayerViewClickEventByTarget:self];
 }
 
@@ -163,6 +163,15 @@ static HJNPSManager *manager = nil;
 // 删除预览的nudges
 - (void)removePreviewNudges {
   [self removeNudges];
+	[self removeMonolayer];
+	[self stopTimer];
+	
+	if (_baseModel.positionModel.position == KPosition_bottom) {
+		if (self.backView) {
+			[self.backView removeFromSuperview];
+			self.backView = nil;
+		}
+	}
 }
 
 - (void)showNudgesByWidth:(CGFloat)nWidth height:(CGFloat)nHeight {

@@ -121,7 +121,7 @@
     __weak HJStar *weakSelf = self;
     CGFloat animationTimeInterval = self.isAnimation ? ANIMATION_TIME_INTERVAL : 0;
     [UIView animateWithDuration:animationTimeInterval animations:^{
-        NSLog(@"%f",weakSelf.scorePercent);
+        NSLog(@"DXPNugges Log:=== %f",weakSelf.scorePercent);
         for (NSInteger i = 0; i < self.numberOfStars; i ++) {
             NSString *svgName = isEmptyString_Nd(self.svgName)?@"icon_star": self.svgName;
             UIImageView *imgView  = [self.starList objectAtIndex:i];

@@ -158,6 +158,11 @@ static HJToolTipsManager *manager = nil;
 		[[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
 		[self stopCurrentPlayingView];
 	}
+	
+	[self stopCurrentPlayingView]; // 停止播放器
+	[self removeNudges];
+	[self removeMonolayer];
+	[self stopTimer]; // 停止定时器
 }
 
 // 停止播放，并且移除播放器
@@ -191,10 +196,13 @@ static HJToolTipsManager *manager = nil;
 	
 	// 遮罩 + 镂空
 	self.monolayerView = [[MonolayerView alloc] init];
-	self.monolayerView.monolayerViewType = KMonolayerViewType_full; // 全屏遮罩
+	self.monolayerView.monolayerViewType = KMonolayerViewType_Spotlight; // 全屏遮罩
 	self.monolayerView.delegate = self;
 	
-	if (!baseModel.backdropModel.type) {
+	[self.monolayerView setAlphaRectParametersByRect:[self getAddress:view] SpotlightType:KOwnPropType_Box radius:2];
+	
+//	if (!baseModel.backdropModel.type) {
+	if (!baseModel.backdropModel.enabled) {
 		self.monolayerView.backgroundAlpha = 0;
 		self.monolayerView.bgroundColor = @"0x000000";
 	} else if (baseModel.backdropModel.type == KBackgroundType_Image) {
@@ -1304,6 +1312,13 @@ static HJToolTipsManager *manager = nil;
 	//  把绘制好的虚线添加上来
 	[lineView.layer addSublayer:shapeLayer];
 	
+}
+
+// 获取view相对于window的绝对地址
+- (CGRect)getAddress:(UIView *)view {
+	//    CGRect rect=[view convertRect: view.bounds toView:kAppDelegate.window];
+	CGRect rect=[view convertRect: view.bounds toView:[TKUtils topViewController].view];
+	return rect;
 }
 
 @end

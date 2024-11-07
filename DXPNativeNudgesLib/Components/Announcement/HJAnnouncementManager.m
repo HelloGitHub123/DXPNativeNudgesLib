@@ -166,7 +166,21 @@ static HJAnnouncementManager *manager = nil;
 
 // 删除预览的nudges
 - (void)removePreviewNudges {
-  [self removeNudges];
+	// 关闭Nudges
+	[self removeNudges];
+	[self removeMonolayer];
+	if (_baseModel.positionModel.position == KPosition_Middle) {
+		if (self.customView) {
+			[self.customView removeFromSuperview];
+			self.customView = nil;
+		}
+	}
+	if (_baseModel.positionModel.position == KPosition_bottom) {
+		if (self.backView) {
+			[self.backView removeFromSuperview];
+			self.backView = nil;
+		}
+	}
 }
 
 // 停止播放，并且移除播放器

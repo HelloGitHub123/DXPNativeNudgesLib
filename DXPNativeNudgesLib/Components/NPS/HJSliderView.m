@@ -46,7 +46,7 @@
 }
 
 - (void)handleClick:(id)sender {
-    NSLog(@"handleClick");
+    NSLog(@"DXPNugges Log:=== handleClick");
     NumberView *selectNumberView = (NumberView *)sender;
     for (int i = 0; i< 11; i++) {
         NumberView *numberView = [self.numberList objectAtIndex:i];
@@ -87,7 +87,7 @@
 
 - (void)sliderValueChanged:(id)sender {
     UISlider *slider = (UISlider *)sender;
-    NSLog(@"slider.value:%df",slider.value);
+    NSLog(@"DXPNugges Log:=== slider.value:%df",slider.value);
     for (int i = 0; i< 11; i++) {
         NumberView *numberView = [self.numberList objectAtIndex:i];
         if (i == (int)slider.value) {

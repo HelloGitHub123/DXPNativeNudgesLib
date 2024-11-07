@@ -181,7 +181,7 @@ static HJRateManager *manager = nil;
 
 // dissMiss 按钮点击事件
 - (void)dissMissButtonClick:(id)sender {
-    NSLog(@"dissMissButtonClick");
+    NSLog(@"DXPNugges Log:=== dissMissButtonClick");
     [self MonolayerViewClickEventByTarget:self];
 }
 
@@ -199,7 +199,22 @@ static HJRateManager *manager = nil;
 
 // 删除预览的nudges
 - (void)removePreviewNudges {
-  [self removeNudges];
+	[self removeNudges];
+	[self removeMonolayer];
+	[self stopTimer];
+	
+	if (_baseModel.positionModel.position == KPosition_Middle) {
+		if (self.customView) {
+			[self.customView removeFromSuperview];
+			self.customView = nil;
+		}
+	}
+	if (_baseModel.positionModel.position == KPosition_bottom) {
+		if (self.backView) {
+			[self.backView removeFromSuperview];
+			self.backView = nil;
+		}
+	}
 }
 
 - (void)showNudgesByWidth:(CGFloat)nWidth height:(CGFloat)nHeight {
@@ -498,10 +513,10 @@ static HJRateManager *manager = nil;
             //是否仅仅是展示,默认为NO，可选
             //self.qcStarView.isJsutDisplay = YES;
 			__weak __typeof(&*self)weakSelf = self;
-            self.qcStarView.sendStarPercent= ^(double data,  NSInteger starNumbers) {
-                NSLog(@"%f",data);
-                
-                d_starScore = data;
+			self.qcStarView.sendStarPercent= ^(double data,  NSInteger starNumbers) {
+				NSLog(@"DXPNugges Log:=== %f",data);
+				
+				d_starScore = data;
 				weakSelf.starNumbers = starNumbers;
             };
         }
@@ -527,10 +542,10 @@ static HJRateManager *manager = nil;
             }];
             self.thumbs.sendThumnsVal= ^(int res) {
                 if (res == 1) {
-                    NSLog(@"点赞:%d",res);
+                    NSLog(@"DXPNugges Log:=== kudos:%d",res);
                 }
                 if (res == 2) {
-                    NSLog(@"点踩:%d",res);
+                    NSLog(@"DXPNugges Log:=== point and click:%d",res);
                 }
                 thumbsScore = res;
             };
@@ -801,9 +816,9 @@ static HJRateManager *manager = nil;
             //是否仅仅是展示,默认为NO，可选
             //self.qcStarView.isJsutDisplay = YES;
 			__weak __typeof(&*self)weakSelf = self;
-            self.qcStarView.sendStarPercent= ^(double data, NSInteger starNumbers) {
-                NSLog(@"%f",data);
-                d_starScore = data;
+			self.qcStarView.sendStarPercent= ^(double data, NSInteger starNumbers) {
+				NSLog(@"DXPNugges Log:=== %f",data);
+				d_starScore = data;
 				weakSelf.starNumbers = starNumbers;
             };
         }
@@ -829,10 +844,10 @@ static HJRateManager *manager = nil;
             }];
             self.thumbs.sendThumnsVal= ^(int res) {
                 if (res == 1) {
-                    NSLog(@"点赞:%d",res);
+                    NSLog(@"DXPNugges Log:=== kudos:%d",res);
                 }
                 if (res == 2) {
-                    NSLog(@"点踩:%d",res);
+                    NSLog(@"DXPNugges Log:=== point and click:%d",res);
                 }
                 thumbsScore = res;
             };

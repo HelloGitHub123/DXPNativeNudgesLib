@@ -31,7 +31,7 @@
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:&error];
     NSString *jsonString;
     if (!jsonData) {
-        NSLog(@"%@",error);
+        NSLog(@"DXPNugges Log:=== %@",error);
     }else{
         jsonString = [[NSString alloc]initWithData:jsonData encoding:NSUTF8StringEncoding];
     }
@@ -52,7 +52,7 @@
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:&error];
     NSString *jsonString;
     if (!jsonData) {
-        NSLog(@"%@",error);
+        NSLog(@"DXPNugges Log:=== %@",error);
     }else{
         jsonString = [[NSString alloc]initWithData:jsonData encoding:NSUTF8StringEncoding];
     }

@@ -96,10 +96,10 @@ static HJNudgesManager *manager = nil;
 	if (![[NSUserDefaults standardUserDefaults] boolForKey:@"nudges_firstLaunch"]) {
 		[[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"nudges_firstLaunch"];
 		[[NSUserDefaults standardUserDefaults] synchronize];
-		NSLog(@"安装之后首次开启App");
+    NSLog(@"DXPNugges Log:=== Opening the App for the first time after installation");
 		// 初始化 频次 数据库表
 		if ([NdHJNudgesDBManager initFrequency:[self getCurrentTimestamp]]) {
-			NSLog(@"频次表初始化成功");
+      NSLog(@"DXPNugges Log:=== Frequency table initialised successfully");
 		}
 		// 获取当前App版本号并存入NSUserDefaults中
 		NSString* appVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
@@ -112,12 +112,12 @@ static HJNudgesManager *manager = nil;
 		NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
 		NSString *localVersion = [userDefaults stringForKey:@"appVersion"];
 		if ([appVersion isEqualToString:localVersion]) {
-			NSLog(@"安装或升级之后并非首次开启App");
+      NSLog(@"DXPNugges Log:=== App is not opened for the first time after installation or upgrade");
 		} else {
-			NSLog(@"升级之后首次开启App");
+      NSLog(@"DXPNugges Log:=== Opening the App for the first time after the upgrade");
 			// 初始化 频次 数据库表
 			if ([NdHJNudgesDBManager initFrequency:[self getCurrentTimestamp]]) {
-				NSLog(@"频次表初始化成功");
+        NSLog(@"DXPNugges Log:=== Frequency table initialised successfully");
 			}
 			//将当前App版本号存入NSUserDefaults中
 			[userDefaults setObject:appVersion forKey:@"appVersion"];
@@ -135,7 +135,7 @@ static HJNudgesManager *manager = nil;
 // 初始化websocket并连接
 - (void)connectWebSocketByConfigCode:(NSString *)configCode  {
 	if (isEmptyString_Nd(configCode)) {
-		NSLog(@"configCode不能为空");
+    NSLog(@"DXPNugges Log:=== ConfigCode cannot be null.");
 		return;
 	}
 	UIDevice *currentDevice = [UIDevice currentDevice];
@@ -330,7 +330,7 @@ static HJNudgesManager *manager = nil;
 				// 初始化 频次 数据库表
 				if (!IsNilOrNull_Nd(frequencyDic) && [frequencyDic allKeys] == 0) {
 					if ([NdHJNudgesDBManager initFrequency:[self getCurrentTimestamp]]) {
-						NSLog(@"频次表初始化成功");
+            NSLog(@"DXPNugges Log:=== Frequency table initialised successfully");
 					}
 				}
 				// 筛选是否属于IOS的nudges
@@ -359,7 +359,7 @@ static HJNudgesManager *manager = nil;
 						// 如果没有，则插入数据库
 						BOOL isSuccess = [NdHJNudgesDBManager insertNudgesWithNudgesId:model.nudgesId model:model];
 						if (isSuccess) {
-							NSLog(@"nudges插入数据库成功");
+              NSLog(@"DXPNugges Log:=== nudges inserted into database successfully");
 						}
 					}
 				}
@@ -368,6 +368,17 @@ static HJNudgesManager *manager = nil;
 			}
 		}
 	}];
+}
+
+- (void)setCurrentPageName:(NSString *)currentPageName {
+  _currentPageName = currentPageName;
+}
+
+// 页面查询nudges
+- (void)launchNudges {
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+	[self queryNudgesWithPageName:self.currentPageName];
+  });
 }
 
 // 判断全局频次条件(用于所有Nudges组件)
@@ -501,9 +512,9 @@ static HJNudgesManager *manager = nil;
 
 #pragma mark -- 调试预览nudges (Preview)
 - (void)showPreviewNudges:(NSDictionary *)dic {
-	if (self.visiblePopTipViews.count > 0) {
-		return;
-	}
+//	if (self.visiblePopTipViews.count > 0) {
+//		return;
+//	}
 	
 	// 清空数据库数据
 	[NdHJNudgesDBManager deleteTableAllDataForNudges];
@@ -628,19 +639,19 @@ static HJNudgesManager *manager = nil;
 	}
 }
 
-- (void)setCurrentPageName:(NSString *)currentPageName {
-	_currentPageName = currentPageName;
-	
-	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-		[self queryNudgesWithPageName:currentPageName];
-	});
-
-}
+//- (void)setCurrentPageName:(NSString *)currentPageName {
+//	_currentPageName = currentPageName;
+//	
+//	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+//		[self queryNudgesWithPageName:currentPageName];
+//	});
+//
+//}
 
 
 #pragma mark -- 查询对应页面上的nudges，并展示 (RunTime 会实时调用该方法)
 - (void)queryNudgesWithPageName:(NSString *)pageName {
-	if (isEmptyString_Nd(self.currentPageName)) {
+  if (isEmptyString_Nd(self.currentPageName) || self.visiblePopTipViews.count > 0) {
 		return;
 	}
 	self.isLock = NO;
@@ -1642,7 +1653,7 @@ static HJNudgesManager *manager = nil;
 	// nudges://match?matchcode={matchcode}
 	// nudges://match?matchcode=${obj.matchcode}&source=ceg
 	NSString *matchcodeVal = [dic objectForKey:@"matchcode"];
-	NSLog(@"matchcode:%@",matchcodeVal);
+    NSLog(@"DXPNugges Log:=== matchcode:%@",matchcodeVal);
 	if (!isEmptyString_Nd(matchcodeVal)) {
 		// 上报设备信息 设备绑定
 		[[HJNudgesManager sharedInstance] uploadDeviceInfoWithMatchCode:matchcodeVal];
@@ -1652,7 +1663,7 @@ static HJNudgesManager *manager = nil;
 	// nudges://connect?configcode={configcode}
 	// nudges://connect?configcode=${obj.configcode}&source=ceg
 	NSString *configcodeVal = [dic objectForKey:@"configcode"];
-	NSLog(@"configcode:%@",configcodeVal);
+    NSLog(@"DXPNugges Log:=== configcode:%@",configcodeVal);
 	if (!isEmptyString_Nd(configcodeVal)) {
 		// 上报设备信息 设备绑定   /mccm/nudges/socket
 		[[HJNudgesManager sharedInstance] connectWebSocketByConfigCode:configcodeVal];
@@ -1664,7 +1675,7 @@ static HJNudgesManager *manager = nil;
 		} else {
 			NSUInteger startIndex = range.location + range.length;
 			NSString *sourceCode = [url.absoluteString substringFromIndex:startIndex];
-			NSLog(@"sourceCode:%@",sourceCode);
+        NSLog(@"DXPNugges Log:=== sourceCode:%@",sourceCode);
 			[HJNudgesManager sharedInstance].sourceType = KSourceType_ceg;
 		}
 	}
@@ -1677,7 +1688,7 @@ static HJNudgesManager *manager = nil;
 		} else {
 			NSUInteger startIndex = range.location + range.length;
 			NSString *matchcode = [url.absoluteString substringFromIndex:startIndex];
-			NSLog(@"matchcode:%@",matchcode);
+        NSLog(@"DXPNugges Log:=== matchcode:%@",matchcode);
 			// 上报设备信息 设备绑定
 			[[HJNudgesManager sharedInstance] uploadDeviceInfoWithMatchCode:matchcode];
 		}
@@ -1691,7 +1702,7 @@ static HJNudgesManager *manager = nil;
 		} else {
 			NSUInteger startIndex = range.location + range.length;
 			NSString *configCode = [url.absoluteString substringFromIndex:startIndex];
-			NSLog(@"configCode:%@",configCode);
+        NSLog(@"DXPNugges Log:=== configCode:%@",configCode);
 			// 上报设备信息 设备绑定   /mccm/nudges/socket
 			[[HJNudgesManager sharedInstance] connectWebSocketByConfigCode:configCode];
 		}
@@ -1704,7 +1715,7 @@ static HJNudgesManager *manager = nil;
 	UIDevice *currentDevice = [UIDevice currentDevice];
 	NSString *deviceId = [[currentDevice identifierForVendor] UUIDString];
 	if (isEmptyString_Nd(matchCode) || isEmptyString_Nd(deviceId)) {
-		NSLog(@"设备匹配码或者Device ID不能为空");
+		NSLog(@"DXPNugges Log:=== The Device Match Code or Device ID cannot be empty.");
 		return;
 	}
 	// 获取设备品牌
@@ -1713,7 +1724,7 @@ static HJNudgesManager *manager = nil;
 	NSString *os = @"IOS";
 	// 获取设备系统版本
 	NSString *osVersion = [[UIDevice currentDevice] systemVersion];
-	NSLog(@"\n  设备基本信息:\n  MatchCode:%@ \n  Device ID:%@ \n  Brand:%@ \n  OS:%@ \n  OsVersion:%@ ",matchCode,deviceId,brand,os,osVersion);
+	NSLog(@"DXPNugges Log:=== \n  Basic equipment information:\n  MatchCode:%@ \n  Device ID:%@ \n  Brand:%@ \n  OS:%@ \n  OsVersion:%@ ",matchCode,deviceId,brand,os,osVersion);
 	
 	// 调用上传接口 /mccm/nudges/device/match 进行匹配
 	NdHJHttpRequest *request = [[NdHJHttpRequest alloc] init];

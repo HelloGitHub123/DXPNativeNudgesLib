@@ -118,6 +118,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param contactId 唯一id
 - (void)nudgesContactRespByNudgesId:(NSInteger)nudgesId contactId:(NSString *)contactId;
 
+
+// 页面查询nudges
+- (void)launchNudges;
+
 //- (void)createTimer:(NSString *)pageName;
 
 // 上报数据

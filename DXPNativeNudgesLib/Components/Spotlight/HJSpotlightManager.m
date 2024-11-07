@@ -150,6 +150,10 @@ static HJSpotlightManager *manager = nil;
 		[[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
 		[self stopCurrentPlayingView];
 	}
+	[self stopCurrentPlayingView]; // 停止播放器
+	[self removeNudges];
+	[self removeMonolayer];
+	[self stopTimer];
 }
 
 // 停止播放，并且移除播放器

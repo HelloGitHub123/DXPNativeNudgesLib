@@ -52,10 +52,10 @@
     [self jsbc_scrollViewDidEndDraggingForDelegateWithDeceleration:deceleration];
     if (!deceleration) {
         [self jsbcDidEndScroll];
-        NSLog(@"------- 停止了手指拖动 %@",self);
+        NSLog(@"DXPNugges Log:=== Stopped finger dragging %@",self);
         UIViewController *VC = [TKUtils topViewController];
         NSString *className = NSStringFromClass([VC class]);
-        NSLog(@"当前VC控制器className:%@",className);
+        NSLog(@"DXPNugges Log:=== Current VC controller className:%@",className);
 //        [[HJNudgesManager sharedInstance] selectNudgesDBWithPageName:className];
     }
 }
@@ -63,10 +63,10 @@
 - (void)jsbc_scrollViewDidEndDeceleratingForDelegate {
     [self jsbc_scrollViewDidEndDeceleratingForDelegate];
     [self jsbcDidEndScroll];
-    NSLog(@"------- 停止了惯性滚动 %@",self);
+    NSLog(@"DXPNugges Log:=== Stopped inertial roll %@",self);
     UIViewController *VC = [TKUtils topViewController];
     NSString *className = NSStringFromClass([VC class]);
-    NSLog(@"当前VC控制器className:%@",className);
+    NSLog(@"DXPNugges Log:=== Current VC controller className:%@",className);
 //    [[HJNudgesManager sharedInstance] selectNudgesDBWithPageName:className];
 	[[HJNudgesManager sharedInstance] queryNudgesWithPageName:className];
 }

@@ -80,10 +80,6 @@
 	if (self.customView) {
 		CGRect contentFrame = [self contentFrame];
         
-        NSLog(@"contentFrame.size.height22222:%f",contentFrame.size.height);
-        
-        NSLog(@"contentFrame.size.width22222:%f",contentFrame.size.width);
-        
         [self.customView setFrame:contentFrame];
     }
     if (self.customView && self.shouldMaskCustomView) {
@@ -636,7 +632,7 @@
     UIView *containerView = targetView.window;
 
     if (nil == containerView) {
-        NSLog(@"Cannot determine container view from UIBarButtonItem: %@", barButtonItem);
+        NSLog(@"DXPNugges Log:===  Cannot determine container view from UIBarButtonItem: %@", barButtonItem);
         self.targetObject = nil;
         return;
     }

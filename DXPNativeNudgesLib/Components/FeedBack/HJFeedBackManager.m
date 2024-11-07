@@ -162,7 +162,7 @@ static HJFeedBackManager *manager = nil;
 
 // dissMiss 按钮点击事件
 - (void)dissMissButtonClick:(id)sender {
-    NSLog(@"dissMissButtonClick");
+    NSLog(@"DXPNugges Log:=== dissMissButtonClick");
     [self MonolayerViewClickEventByTarget:self];
 }
 
@@ -181,6 +181,21 @@ static HJFeedBackManager *manager = nil;
 // 删除预览的nudges
 - (void)removePreviewNudges {
   [self removeNudges];
+	[self removeMonolayer];
+	[self stopTimer];
+	
+	if (_baseModel.positionModel.position == KPosition_Middle) {
+		if (self.customView) {
+			[self.customView removeFromSuperview];
+			self.customView = nil;
+		}
+	}
+	if (_baseModel.positionModel.position == KPosition_bottom) {
+		if (self.backView) {
+			[self.backView removeFromSuperview];
+			self.backView = nil;
+		}
+	}
 }
 
 -(void)radioCheckBoxSelected:(GZFRadioCheckBox *) radioCheckBox index:(NSUInteger)index showText:(NSString *)showText hideText:(NSString *)hideText {
@@ -691,7 +706,7 @@ static HJFeedBackManager *manager = nil;
         radioCheckBox.hideTextArray = indexArry;
         radioCheckBox.showTextArray = [baseModel.ownPropModel.textProperties.options copy]; //[NSArray arrayWithObjects:@"option 1",@"option 2",@"option 3",@"option 4", nil];
         [radioCheckBox radioCheckBoxClick:^(NSUInteger index, NSString *showText, NSString *hideText) {
-            NSLog(@"index----->%d------>%@------>%@",index,showText,hideText);
+            NSLog(@"DXPNugges Log:=== index----->%d------>%@------>%@",index,showText,hideText);
         }];
         
         CGFloat tHeight = (t_fontSize >= 24 ? t_fontSize: 24);
@@ -733,7 +748,7 @@ static HJFeedBackManager *manager = nil;
         radioCheckBox.hideTextArray = indexArry;
         radioCheckBox.showTextArray = [baseModel.ownPropModel.textProperties.options copy];
         [radioCheckBox multCheckBoxClick:^(NSMutableArray *hideMulitSelectArray) {
-            NSLog(@"mulit select %@",hideMulitSelectArray);
+            NSLog(@"DXPNugges Log:=== mulit select %@",hideMulitSelectArray);
         }];
         CGFloat tHeight = (t_fontSize >= 24 ? t_fontSize: 24);
         h_radioCheckbox = count*tHeight  + count* 5;

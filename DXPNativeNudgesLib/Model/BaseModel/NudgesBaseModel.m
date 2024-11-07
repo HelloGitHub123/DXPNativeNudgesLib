@@ -694,7 +694,7 @@
         if (!isEmptyString_Nd(backdrop)) {
             NSDictionary *dic = [NdHJHandelJson dictionaryWithJsonString:backdrop];
             BackdropModel *model = [[BackdropModel alloc] init];
-            NSInteger isEnabled = [self convertBoolVal:[NSString ndStringWithoutNil:[dic objectForKey:@"enabled"]]];
+			NSInteger isEnabled = [[dic objectForKey:@"enabled"] intValue]; //[self convertBoolVal:[NSString ndStringWithoutNil:[dic objectForKey:@"enabled"]]];
             model.enabled = isEnabled;
             model.type = [[NSString ndStringWithoutNil:[dic objectForKey:@"type"]] integerValue];
             model.backgroundColor = [NSString ndStringWithoutNil:[dic objectForKey:@"backgroundColor"]];
@@ -923,16 +923,16 @@
 
 - (NSInteger)convertBoolVal:(NSString *)val {
     NSInteger reVal = 0;
-    if ([val isEqualToString:@"true"]) {
+    if ([[val lowercaseString] isEqualToString:@"true"]) {
         reVal = 1;
     }
-    if ([val isEqualToString:@"false"]) {
+    if ([[val lowercaseString] isEqualToString:@"false"]) {
         reVal = 0;
     }
-    if ([val isEqualToString:@"N"]) {
+    if ([[val lowercaseString] isEqualToString:@"n"] || [[val lowercaseString] isEqualToString:@"no"]) {
         reVal = 0;
     }
-    if ([val isEqualToString:@"Y"]) {
+    if ([[val lowercaseString] isEqualToString:@"y"] || [[val lowercaseString] isEqualToString:@"yes"]) {
         reVal = 1;
     }
     return reVal;

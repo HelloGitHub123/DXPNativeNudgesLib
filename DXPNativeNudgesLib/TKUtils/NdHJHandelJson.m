@@ -21,7 +21,7 @@
                                                         options:NSJSONReadingMutableContainers
                                                           error:&err];
     if (err) {
-        NSLog(@"json解析失败：%@",err);
+        NSLog(@"DXPNugges Log:=== json parsing failure：%@",err);
         return nil;
     }
 
@@ -45,12 +45,12 @@
     
     NSString *jsonString = @"";
     if (!jsonData) {
-        NSLog(@"%@",err);
+        NSLog(@"DXPNugges Log:=== %@",err);
     } else {
         jsonString = [[NSString alloc]initWithData:jsonData encoding:NSUTF8StringEncoding];
     }
 
-    NSLog(@"jsonString=====%@",jsonString);
+    NSLog(@"DXPNugges Log:=== jsonString=====%@",jsonString);
     return jsonString;
 }
 
