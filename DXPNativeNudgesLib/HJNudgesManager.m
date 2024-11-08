@@ -75,6 +75,21 @@ static HJNudgesManager *manager = nil;
 	return self;
 }
 
+// 匹配设备，在app未启动 或者 没有进程的情况下调用
+- (void)pairDeviceWebSocketConnectWithLaunchOptions:(NSDictionary *)launchOptions {
+	NSURL *url = launchOptions[UIApplicationLaunchOptionsURLKey];
+	NSString *wsSocketIP = [[NSUserDefaults standardUserDefaults] objectForKey:@"wsSocketIP"];
+	if (url && !isEmptyString_Nd(wsSocketIP)) {
+		NSLog(@"DXPNugges Log:=== Launch by URL: %@", url);
+		if ([[url absoluteString] containsString:@"nudges://"]) {
+			NudgesConfigParametersModel *model = [[NudgesConfigParametersModel alloc] init];
+			model.wsSocketIP = wsSocketIP;
+			[HJNudgesManager sharedInstance].configParametersModel = model;
+			[[HJNudgesManager sharedInstance] openNudgesUrl:url];
+		}
+	}
+}
+
 // 数据初始化
 - (void)initData {
 	self.sessionFlag = YES;

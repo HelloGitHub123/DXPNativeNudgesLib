@@ -146,7 +146,7 @@ static HJToolTipsManager *manager = nil;
 		[self stopCurrentPlayingView];
 		// 寻找下一个nudges
 		
-		[[HJNudgesManager sharedInstance] showNextNudges];
+//		[[HJNudgesManager sharedInstance] showNextNudges];
 	}
 }
 
@@ -281,7 +281,7 @@ static HJToolTipsManager *manager = nil;
 		} else {
 			[dissButton setBackgroundColor:[UIColor clearColor]] ;
 		}
-		h_dissButton = iconSize;
+		h_dissButton = iconSize + 14;
 	} else {
 		[dissButton mas_makeConstraints:^(MASConstraintMaker *make) {
 			make.top.equalTo(customView.mas_top).offset(0);

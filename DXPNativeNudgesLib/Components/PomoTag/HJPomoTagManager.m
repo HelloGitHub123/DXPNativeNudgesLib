@@ -92,7 +92,7 @@ static HJPomoTagManager *manager = nil;
 		[popTipView dismissAnimated:YES];
 		[[HJNudgesManager sharedInstance].visiblePopTipViews removeObjectAtIndex:0];
 		// 寻找下一个nudges
-		[[HJNudgesManager sharedInstance] showNextNudges];
+//		[[HJNudgesManager sharedInstance] showNextNudges];
 	}
 }
 
